@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (form2FA) {
-        form2FA.addEventListener('submit', (e) => {
+        form2FA.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             let code = '';
@@ -98,25 +98,41 @@ document.addEventListener('DOMContentLoaded', () => {
             if (errorAlert) errorAlert.style.display = 'none';
 
             if (code.length < 6) {
-                showError('Por favor ingresa los 6 dígitos del código de verificación. ');
+                showError('Por favor ingresa los 6 dígitos del código de verificación.');
                 return;
             }
 
             submit2FABtn.disabled = true;
             submit2FABtn.textContent = 'Verificando...';
 
-            setTimeout(() => {
-                if (code === '454545') {
-                    localStorage.setItem('eslabon_2fa_verified', 'true');
-                    window.location.href = '/pages/main.html';
-                } else {
-                    showError('Código de verificación incorrecto. Inténtalo de nuevo.');
-                    otpInputs.forEach(inp => inp.value = '');
-                    if (otpInputs[0]) otpInputs[0].focus();
-                    submit2FABtn.disabled = false;
-                    submit2FABtn.textContent = 'Verificar Código';
-                }
-            }, 400);
+            try {
+                await AuthModel.verify2FA(code);
+                localStorage.setItem('eslabon_2fa_verified', 'true');
+                window.location.href = '/pages/main.html';
+            } catch (err) {
+                showError(err.message || 'Código de verificación incorrecto. Revisa la consola del servidor.');
+                otpInputs.forEach(inp => inp.value = '');
+                if (otpInputs[0]) otpInputs[0].focus();
+            } finally {
+                submit2FABtn.disabled = false;
+                submit2FABtn.textContent = 'Verificar Código';
+            }
+        });
+    }
+
+    const resendBtn = document.getElementById('link-resend-2fa');
+    if (resendBtn) {
+        resendBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                resendBtn.textContent = 'Generando nuevo código...';
+                await AuthModel.resend2FA();
+                showInfo('Código 2FA Reenviado', 'Se ha generado un nuevo código de 6 dígitos. Abre la consola de JavaScript (F12) para consultarlo.');
+            } catch (err) {
+                showError(err.message || 'No se pudo generar nuevo código.');
+            } finally {
+                resendBtn.textContent = '¿No recibiste el código? Reenviar código';
+            }
         });
     }
 
