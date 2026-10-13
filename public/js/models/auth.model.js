@@ -1,20 +1,8 @@
 import { API_BASE_URL, setSession, clearSession, getStoredUser, getToken } from '../config.js';
 
 export function resolveLocalAvatar(avatarStr, identifier) {
-    if (avatarStr && typeof avatarStr === 'string') {
-        if (avatarStr.includes('default-user')) {
-            return '/assets/default-user.png';
-        }
-        if (avatarStr.includes('user-profile')) {
-            return '/assets/user-profile.jpg';
-        }
-    }
-    const str = String(identifier || '').toLowerCase();
-    if (str.includes('4092') || str.includes('maria') || str.includes('maría')) {
-        return '/assets/default-user.png';
-    }
-    if (str.includes('4091') || str.includes('juan')) {
-        return '/assets/user-profile.jpg';
+    if (avatarStr && typeof avatarStr === 'string' && avatarStr.trim().length > 0) {
+        return avatarStr;
     }
     return '/assets/default-user.png';
 }
@@ -33,33 +21,38 @@ export const AuthModel = {
         localStorage.removeItem('eslabon_2fa_verified');
     },
 
-    async login(email, password) {
+    async login(usernameOrEmail, password) {
         try {
             const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email: email.trim(), password })
+                body: JSON.stringify({
+                    username: usernameOrEmail.trim(),
+                    password
+                })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                const errorMessage = data && data.message ? data.message : 'Correo electrónico o contraseña incorrectos.';
+                const errorMessage = data && (data.error || data.message) ? (data.error || data.message) : 'Usuario o contraseña incorrectos.';
                 throw new Error(errorMessage);
             }
 
-            const token = data.token || data.accessToken || `token-${Date.now()}`;
-            const rawUser = data.user || data.usuario || data;
-            const userId = rawUser.id || rawUser.no_empleado || 'EP-4091';
+            const token = data.token;
+            const rawUser = data.user || data;
 
             const user = {
-                id: userId,
-                name: rawUser.nombre || rawUser.name || 'Juan Pérez',
-                email: rawUser.email || email,
-                role: rawUser.rol || rawUser.role || 'Colaborador',
-                avatar: resolveLocalAvatar(rawUser.avatar || rawUser.foto, userId || email)
+                id: rawUser.id || rawUser.id_empleado,
+                nombre: rawUser.nombre || '',
+                name: rawUser.nombre || '',
+                email: rawUser.email || rawUser.username || usernameOrEmail,
+                username: rawUser.username || usernameOrEmail,
+                role: rawUser.rol || 'Colaborador',
+                rol: rawUser.rol || 'Colaborador',
+                avatar: resolveLocalAvatar(rawUser.avatar, rawUser.id)
             };
 
             setSession(token, user);

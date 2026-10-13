@@ -1,219 +1,121 @@
-import { fetchWithAuth } from '../config.js';
-
-const STORAGE_KEY_ATTENDANCE = 'eslabon_attendance_db';
-const STORAGE_KEY_LOGS = 'eslabon_daily_status';
-const STORAGE_KEY_RECORDS = 'eslabon_detailed_logs_db';
+import { fetchWithAuth, getStoredUser } from '../config.js';
 
 export const AttendanceModel = {
-    async getAllRecordsFromAPI() {
+    async getAllRecordsFromAPI(year, month) {
         try {
-            const response = await fetchWithAuth('/asistencia');
+            const user = getStoredUser();
+            const empleadoId = user ? user.id : 1;
+            const y = year || new Date().getFullYear();
+            const m = month || (new Date().getMonth() + 1);
+            
+            const response = await fetchWithAuth(`/asistencia?empleado_id=${empleadoId}&anio=${y}&mes=${m}`);
             if (response.ok) {
                 const data = await response.json();
-                return data.calendarRecords || data;
+                return this.formatAttendanceMap(data);
             }
         } catch (e) {
-            
+            console.error('Error cargando registros de asistencia desde la API:', e);
         }
-        return this.getAllRecords();
+
+        const { bitacora } = await this.getBitacoraData();
+        return this.formatAttendanceMap(bitacora);
     },
 
-    getAllRecords() {
-        const data = localStorage.getItem(STORAGE_KEY_ATTENDANCE);
-        let records = {};
-        if (data) {
-            try {
-                records = JSON.parse(data);
-            } catch (e) {
-                records = {};
+    formatAttendanceMap(data) {
+        const map = {};
+        if (!data) return map;
+
+        let list = null;
+
+        if (Array.isArray(data)) {
+            list = data;
+        } else if (typeof data === 'object') {
+            if (Array.isArray(data.records)) list = data.records;
+            else if (Array.isArray(data.calendarRecords)) list = data.calendarRecords;
+            else if (Array.isArray(data.bitacora)) list = data.bitacora;
+            else {
+                Object.keys(data).forEach(key => {
+                    if (key !== 'kpis' && key !== 'bitacora' && key !== 'records') {
+                        const val = String(data[key]).toLowerCase();
+                        if (val.includes('falt') || val.includes('miss') || val.includes('ausent') || val === 'false') {
+                            map[key] = 'missed';
+                        } else {
+                            map[key] = 'attended';
+                        }
+                    }
+                });
+                return map;
             }
-        } else {
-            records = {
-                '2026-09-01': 'attended',
-                '2026-09-02': 'attended',
-                '2026-09-03': 'attended',
-                '2026-09-04': 'attended',
-                '2026-09-07': 'attended',
-                '2026-09-08': 'attended',
-                '2026-09-09': 'attended',
-                '2026-09-10': 'attended'
-            };
         }
 
-        records['2026-09-08'] = 'attended';
-        records['2026-09-10'] = 'attended';
-
-        localStorage.setItem(STORAGE_KEY_ATTENDANCE, JSON.stringify(records));
-        return records;
-    },
-
-    getDetailedLogs() {
-        const data = localStorage.getItem(STORAGE_KEY_RECORDS);
-        let logs = [];
-        if (!data) {
-            logs = [
-                {
-                    fecha: '2026-09-10',
-                    dia: 'Jueves',
-                    entrada: '08:00 AM',
-                    salida: '06:00 PM',
-                    ordinarias: 8.0,
-                    extra: 0.0,
-                    total: 8.0,
-                    metodo: 'Lector Biométrico',
-                    estado: 'Puntual'
-                },
-                {
-                    fecha: '2026-09-09',
-                    dia: 'Miércoles',
-                    entrada: '08:00 AM',
-                    salida: '06:00 PM',
-                    ordinarias: 8.0,
-                    extra: 0.0,
-                    total: 8.0,
-                    metodo: 'Portal Web (Kiosco)',
-                    estado: 'Puntual'
-                },
-                {
-                    fecha: '2026-09-08',
-                    dia: 'Martes',
-                    entrada: '08:00 AM',
-                    salida: '06:00 PM',
-                    ordinarias: 8.0,
-                    extra: 0.0,
-                    total: 8.0,
-                    metodo: 'Lector Biométrico',
-                    estado: 'Puntual'
-                }
-            ];
-            localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(logs));
-            return logs;
-        }
-        try {
-            logs = JSON.parse(data);
-            logs.forEach(l => {
-                if (l.fecha === '2026-09-10' || l.fecha === '2026-09-08' || l.fecha === '2026-09-09') {
-                    l.entrada = '08:00 AM';
-                    l.salida = '06:00 PM';
+        if (Array.isArray(list)) {
+            list.forEach(item => {
+                const rawDate = item.fecha || item.date || item.fecha_registro;
+                if (!rawDate) return;
+                const dateStr = String(rawDate).split('T')[0];
+                const estado = String(item.estado || item.estatus || item.status || '').toLowerCase();
+                
+                if (estado.includes('falt') || estado.includes('miss') || estado.includes('ausent')) {
+                    map[dateStr] = 'missed';
+                } else {
+                    map[dateStr] = 'attended';
                 }
             });
-            localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(logs));
-            return logs;
-        } catch (e) {
-            return [];
         }
+
+        return map;
     },
 
-    recordCheckIn(dateKey) {
-        const records = this.getAllRecords();
-        records[dateKey] = 'attended';
-        localStorage.setItem(STORAGE_KEY_ATTENDANCE, JSON.stringify(records));
-
-        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        const todayStatus = {
-            date: dateKey,
-            checkInTime: timeStr,
-            checkOutTime: null
-        };
-        localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(todayStatus));
-
-        const logs = this.getDetailedLogs();
-        const existingIdx = logs.findIndex(l => l.fecha === dateKey);
-
-        const newEntry = {
-            fecha: dateKey,
-            dia: getNombreDia(dateKey),
-            entrada: timeStr,
-            salida: 'En turno',
-            ordinarias: 8.0,
-            extra: 0.0,
-            total: 8.0,
-            metodo: 'Portal Web (Kiosco)',
-            estado: 'Puntual'
-        };
-
-        if (existingIdx >= 0) {
-            logs[existingIdx] = { ...logs[existingIdx], ...newEntry };
-        } else {
-            logs.unshift(newEntry);
-        }
-
-        localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(logs));
-
-        fetchWithAuth('/asistencia/check-in', {
-            method: 'POST',
-            body: JSON.stringify({ fecha: dateKey, hora: timeStr })
-        }).catch(() => {});
-
-        return todayStatus;
-    },
-
-    recordCheckOut(dateKey) {
-        const status = this.getTodayStatus(dateKey);
-        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        if (status) {
-            status.checkOutTime = timeStr;
-            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(status));
-        }
-
-        const logs = this.getDetailedLogs();
-        const existing = logs.find(l => l.fecha === dateKey);
-        if (existing) {
-            existing.salida = timeStr;
-            localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(logs));
-        }
-
-        fetchWithAuth('/asistencia/check-out', {
-            method: 'POST',
-            body: JSON.stringify({ fecha: dateKey, hora: timeStr })
-        }).catch(() => {});
-
-        return status;
-    },
-
-    getTodayStatus(dateKey) {
-        const data = localStorage.getItem(STORAGE_KEY_LOGS);
-        if (!data) return null;
+    async getBitacoraData() {
         try {
-            const parsed = JSON.parse(data);
-            return parsed.date === dateKey ? parsed : null;
+            const user = getStoredUser();
+            const empleadoId = user ? user.id : 1;
+            const response = await fetchWithAuth(`/asistencia/bitacora?empleado_id=${empleadoId}`);
+            if (response.ok) {
+                const data = await response.json();
+                const kpis = data.kpis || {};
+                const rawBitacora = Array.isArray(data) ? data : (data.bitacora || []);
+
+                const bitacora = rawBitacora.map(item => {
+                    const ord = Number(item.horas_ordinarias || item.ordinarias || 8);
+                    const ext = Number(item.horas_extra || item.extra || 0);
+                    const dateStr = item.fecha || '';
+                    let diaNombre = item.dia || '';
+                    if (!diaNombre && dateStr) {
+                        const parts = dateStr.split('-');
+                        if (parts.length === 3) {
+                            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                            diaNombre = dias[dateObj.getDay()];
+                        }
+                    }
+
+                    return {
+                        id: item.id,
+                        fecha: dateStr,
+                        dia: diaNombre,
+                        entrada: item.hora_entrada || item.entrada || '--:--',
+                        salida: item.hora_salida || item.salida || '--:--',
+                        ordinarias: ord,
+                        extra: ext,
+                        total: Number(item.total || (ord + ext)),
+                        metodo: item.metodo || 'Lector Biométrico',
+                        estado: item.estado || 'Puntual'
+                    };
+                });
+
+                return {
+                    kpis,
+                    bitacora
+                };
+            }
         } catch (e) {
-            return null;
+            console.error('Error cargando bitácora de asistencia desde la API:', e);
         }
-    },
-
-    getStatsTiempoLaborado() {
-        const logs = this.getDetailedLogs();
-
-        const asistidos = logs.filter(l => l.estado !== 'Falta').length;
-        const faltas = logs.filter(l => l.estado === 'Falta').length;
-        const retardos = logs.filter(l => l.estado === 'Retardo').length;
-
-        const horasOrdinarias = logs.reduce((acc, l) => acc + (l.ordinarias || 0), 0);
-        const horasExtra = logs.reduce((acc, l) => acc + (l.extra || 0), 0);
-        const horasTotales = horasOrdinarias + horasExtra;
-
-        const tasaAsistencia = (asistidos + faltas > 0) ? ((asistidos / (asistidos + faltas)) * 100).toFixed(1) : '100.0';
 
         return {
-            horasTotales,
-            horasOrdinarias,
-            horasExtra,
-            asistidos,
-            faltas,
-            retardos,
-            tasaAsistencia,
-            promedioEntrada: logs.length > 0 ? (logs[0].entrada || '--:--') : '--:--'
+            kpis: {},
+            bitacora: []
         };
     }
 };
-
-function getNombreDia(dateStr) {
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return '';
-    const date = new Date(parts[0], parts[1] - 1, parts[2]);
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return dias[date.getDay()];
-}

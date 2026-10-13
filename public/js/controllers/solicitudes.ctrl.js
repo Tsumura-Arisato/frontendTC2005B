@@ -1,5 +1,6 @@
 import { initLayout } from './layout.ctrl.js';
 import { SolicitudesModel } from '../models/solicitudes.model.js';
+import { showSuccess, showError } from '../utils/alert.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = initLayout('solicitudes');
@@ -111,16 +112,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!start || !end) return;
 
-            await SolicitudesModel.crearSolicitud('vacaciones', {
-                fechaInicio: start,
-                fechaFin: end,
-                dias: parseInt(diasText) || 1,
-                motivo
-            });
+            let fechaRegreso = '';
+            if (end) {
+                const endDateObj = new Date(end);
+                endDateObj.setDate(endDateObj.getDate() + 1);
+                fechaRegreso = endDateObj.toISOString().split('T')[0];
+            }
+            const diasNum = parseInt(diasText) || 1;
 
-            closeCreateModal();
-            await renderTable();
-            alert('¡Solicitud de vacaciones enviada con éxito!');
+            try {
+                await SolicitudesModel.crearSolicitud('vacaciones', {
+                    fecha_inicio: start,
+                    fechaInicio: start,
+                    fecha_fin: end,
+                    fechaFin: end,
+                    fecha_regreso: fechaRegreso,
+                    fechaRegreso: fechaRegreso,
+                    dias_solicitados: diasNum,
+                    dias: diasNum,
+                    motivo: motivo
+                });
+
+                closeCreateModal();
+                await renderTable();
+                await showSuccess('¡Solicitud Enviada con Éxito!', 'Tu solicitud de vacaciones ha sido registrada en el sistema y se encuentra pendiente de aprobación.');
+            } catch (err) {
+                await showError('Error al Enviar Solicitud', err.message || 'No fue posible registrar tu solicitud de vacaciones.');
+            }
         });
     }
 
@@ -133,15 +151,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!monto || !motivo) return;
 
-            await SolicitudesModel.crearSolicitud('prestamos', {
-                monto,
-                plazoQuincenas,
-                motivo
-            });
+            try {
+                await SolicitudesModel.crearSolicitud('prestamos', {
+                    monto: monto,
+                    plazo_quincenas: plazoQuincenas,
+                    plazoQuincenas: plazoQuincenas,
+                    motivo: motivo
+                });
 
-            closeCreateModal();
-            await renderTable();
-            alert('¡Solicitud de préstamo enviada con éxito!');
+                closeCreateModal();
+                await renderTable();
+                await showSuccess('¡Solicitud Enviada con Éxito!', 'Tu solicitud de préstamo personal ha sido enviada para su análisis financiero.');
+            } catch (err) {
+                await showError('Error al Enviar Solicitud', err.message || 'No fue posible registrar tu solicitud de préstamo.');
+            }
         });
     }
 
@@ -154,15 +177,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!valorNuevo || !motivo) return;
 
-            await SolicitudesModel.crearSolicitud('actualizacion_datos', {
-                campo,
-                valorNuevo,
-                motivo
-            });
+            try {
+                await SolicitudesModel.crearSolicitud('actualizacion_datos', {
+                    campo: campo,
+                    valor_nuevo: valorNuevo,
+                    valorNuevo: valorNuevo,
+                    motivo: motivo
+                });
 
-            closeCreateModal();
-            await renderTable();
-            alert('¡Solicitud de actualización de datos enviada con éxito!');
+                closeCreateModal();
+                await renderTable();
+                await showSuccess('¡Solicitud Enviada con Éxito!', 'Tu solicitud de actualización de datos personales ha sido enviada al área de RH.');
+            } catch (err) {
+                await showError('Error al Enviar Solicitud', err.message || 'No fue posible registrar tu solicitud de actualización.');
+            }
         });
     }
 
@@ -269,11 +297,122 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sol.estatus === 'Aprobada') badgeClass = 'badge-success';
         if (sol.estatus === 'Rechazada') badgeClass = 'badge-danger';
 
+        const d = sol.detalles || {};
+
+        let specificFieldsHTML = '';
+
+        if (sol.tipo === 'vacaciones') {
+            let fStart = d.fechaInicio || d.vacaciones_fecha_inicio || d.fecha_inicio || '';
+            let fEnd = d.fechaFin || d.vacaciones_fecha_fin || d.fecha_fin || '';
+            let dCount = d.diasSolicitados || d.vacaciones_dias || d.dias_solicitados || d.dias || '';
+            let fRegreso = d.fechaRegreso || d.vacaciones_fecha_regreso || d.fecha_regreso || '';
+
+            if ((!fStart || !fEnd) && sol.resumen) {
+                const datesFound = sol.resumen.match(/\b(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4})\b/g);
+                if (datesFound && datesFound.length >= 1) fStart = fStart || datesFound[0];
+                if (datesFound && datesFound.length >= 2) fEnd = fEnd || datesFound[1];
+            }
+
+            if (!dCount && sol.resumen) {
+                const daysFound = sol.resumen.match(/\b(\d+)\s*días?\b/i);
+                if (daysFound) dCount = daysFound[1];
+            }
+
+            if (fStart && fEnd && !dCount) {
+                const sDate = new Date(fStart);
+                const eDate = new Date(fEnd);
+                if (!isNaN(sDate) && !isNaN(eDate) && eDate >= sDate) {
+                    const diffTime = Math.abs(eDate - sDate);
+                    dCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                }
+            }
+
+            if (fEnd && !fRegreso) {
+                const eDate = new Date(fEnd);
+                if (!isNaN(eDate)) {
+                    eDate.setDate(eDate.getDate() + 1);
+                    fRegreso = eDate.toISOString().split('T')[0];
+                }
+            }
+
+            const periodoStr = (fStart && fEnd) ? `Del ${fStart} al ${fEnd}` : (fStart || fEnd || 'No especificado');
+
+            specificFieldsHTML = `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem;">
+                    <span class="cfdi-detail-label">Tipo de Trámite:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">Vacaciones</span>
+                </div>
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem; background-color: rgba(5, 150, 105, 0.08); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid rgba(5, 150, 105, 0.2);">
+                    <span class="cfdi-detail-label" style="color: #059669; font-weight: 700;">Período Solicitado:</span>
+                    <span class="cfdi-detail-value" style="color: #047857; font-weight: 700; font-size: 0.95rem;">${periodoStr}</span>
+                </div>
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem;">
+                    <span class="cfdi-detail-label">Fecha de Inicio:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">${fStart || 'No especificada'}</span>
+                </div>
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem;">
+                    <span class="cfdi-detail-label">Fecha de Término:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">${fEnd || 'No especificada'}</span>
+                </div>
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem;">
+                    <span class="cfdi-detail-label">Días Solicitados:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 700; color: #059669; font-size: 0.95rem;">${dCount ? `${dCount} días` : 'No especificado'}</span>
+                </div>
+                ${fRegreso ? `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.5rem;">
+                    <span class="cfdi-detail-label">Fecha de Reincorporación:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">${fRegreso}</span>
+                </div>` : ''}
+            `;
+        } else if (sol.tipo === 'prestamos') {
+            const montoFormatted = d.monto ? `$${Number(d.monto).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN` : '';
+            specificFieldsHTML = `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Tipo de Trámite:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">Préstamo por Nómina</span>
+                </div>
+                ${montoFormatted ? `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Monto Solicitado:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 700; color: #2563EB;">${montoFormatted}</span>
+                </div>` : ''}
+                ${d.plazoQuincenas ? `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Plazo a Pagar:</span>
+                    <span class="cfdi-detail-value">${d.plazoQuincenas} quincenas</span>
+                </div>` : ''}
+            `;
+        } else if (sol.tipo === 'actualizacion_datos') {
+            specificFieldsHTML = `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Tipo de Trámite:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">Actualización de Datos</span>
+                </div>
+                ${d.campo ? `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Campo a Modificar:</span>
+                    <span class="cfdi-detail-value">${d.campo}</span>
+                </div>` : ''}
+                ${d.valorNuevo ? `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Nuevo Valor Propuesto:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600; color: #0D9488;">${d.valorNuevo}</span>
+                </div>` : ''}
+            `;
+        } else {
+            specificFieldsHTML = `
+                <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Tipo de Trámite:</span>
+                    <span class="cfdi-detail-value" style="font-weight: 600;">${sol.tipoEtiqueta}</span>
+                </div>
+            `;
+        }
+
         bodyContent.innerHTML = `
-            <div style="background-color: #F8FAFC; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.2rem;">
+            <div style="background-color: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.2rem;">
                 <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
                     <span class="cfdi-detail-label">Folio de Solicitud:</span>
-                    <span class="cfdi-detail-value font-mono">${sol.id}</span>
+                    <span class="cfdi-detail-value font-mono" style="font-weight: 700;">${sol.id}</span>
                 </div>
                 <div class="cfdi-detail-row" style="margin-bottom: 0.4rem;">
                     <span class="cfdi-detail-label">Fecha de Solicitud:</span>
@@ -285,11 +424,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h4 style="font-size: 0.9rem; color: var(--primary-dark); margin-bottom: 0.6rem;">DETALLES DE LA SOLICITUD</h4>
-            <div style="line-height: 1.6; font-size: 0.9rem; color: var(--text-main);">
-                <p><strong>Resumen:</strong> ${sol.resumen}</p>
-                ${sol.detalles && sol.detalles.motivo ? `<p style="margin-top: 0.5rem;"><strong>Motivo / Justificación:</strong> ${sol.detalles.motivo}</p>` : ''}
-                ${sol.detalles && sol.detalles.valorNuevo ? `<p style="margin-top: 0.5rem;"><strong>Nuevo Valor Propuesto:</strong> ${sol.detalles.valorNuevo}</p>` : ''}
+            <h4 style="font-size: 0.85rem; color: var(--primary-dark); font-weight: 700; text-transform: uppercase; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem;">
+                DETALLES COMPLETOS DE LA SOLICITUD
+            </h4>
+
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                ${specificFieldsHTML}
+                <div class="cfdi-detail-row" style="margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                    <span class="cfdi-detail-label">Resumen:</span>
+                    <span class="cfdi-detail-value">${sol.resumen}</span>
+                </div>
+                ${d.motivo ? `
+                <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color);">
+                    <div style="font-weight: 600; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.3rem;">Motivo / Justificación:</div>
+                    <div style="font-size: 0.9rem; color: var(--text-main); background-color: rgba(0,0,0,0.02); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); white-space: pre-wrap;">${d.motivo}</div>
+                </div>` : ''}
             </div>
         `;
 

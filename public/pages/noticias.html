@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/components.css">
+    <script src="/vendor/sweetalert2.all.min.js"></script>
 </head>
 
 <body>
@@ -26,94 +27,50 @@
             
             <div id="navbar-container"></div>
 
-            <header class="page-header">
-                <h1 class="title-primary">Noticias y Comunicados Oficiales</h1>
-                <p class="subtitle">Mantente al día con los comunicados institucionales, nuevos beneficios de Capital Humano, boletines de la empresa y eventos corporativos.</p>
+            <header class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 class="title-primary" style="margin-bottom: 4px;">Noticias y Comunicados Oficiales</h1>
+                    <p class="subtitle" style="margin-bottom: 0;">Mantente al día con los comunicados institucionales, nuevos beneficios de Capital Humano, boletines de la empresa y eventos corporativos.</p>
+                </div>
+                <button type="button" id="btn-crear-noticia" class="btn btn-accent" style="display: none; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.25);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>+ Publicar Comunicado</span>
+                </button>
             </header>
 
             <section class="card" style="background: linear-gradient(135deg, var(--primary-dark) 0%, #1E3A8A 100%); color: #FFFFFF; padding: 2.2rem; margin-bottom: 2rem; position: relative; overflow: hidden;">
                 <div style="max-width: 800px;">
-                    <span class="badge" style="background-color: var(--accent-color); color: #FFFFFF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.8rem; display: inline-block;">
+                    <span class="badge" id="noticia-destacada-categoria" style="background-color: var(--accent-color); color: #FFFFFF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.8rem; display: inline-block;">
                         COMUNICADO PRINCIPAL • RECURSOS HUMANOS
                     </span>
-                    <h2 style="font-size: 1.6rem; color: #FFFFFF; font-weight: 800; margin-bottom: 0.8rem; line-height: 1.3;">
-                        Anuncio de Beneficios 2026: Nuevo Convenio de Salud y Cobertura Médica Ampliada
+                    <h2 id="noticia-destacada-titulo" style="font-size: 1.6rem; color: #FFFFFF; font-weight: 800; margin-bottom: 0.8rem; line-height: 1.3;">
+                        Cargando comunicado principal...
                     </h2>
-                    <p style="font-size: 0.95rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 1.2rem;">
-                        Nos complace anunciar que a partir del 01 de Octubre de 2026 se extiende la cobertura del Plan Integral de Salud para todos los colaboradores de Eslabón Cloud y sus dependientes directos sin costo adicional.
+                    <p id="noticia-destacada-resumen" style="font-size: 0.95rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 1.2rem;">
+                        Consulta los últimos anuncios y boletines institucionales.
                     </p>
-                    <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: #94A3B8;">
-                        <span style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            Publicado: 09 de Septiembre, 2026
-                        </span>
-                        <span style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            Dirección de Talento Humano
-                        </span>
-                        <span style="display: inline-flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            Lectura: 3 min
-                        </span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 1.2rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: #94A3B8;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                <span id="noticia-destacada-fecha">Publicado: --/--/----</span>
+                            </span>
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                <span id="noticia-destacada-autor">Dirección de Talento Humano</span>
+                            </span>
+                        </div>
+                        <button type="button" class="btn btn-sm" id="btn-leer-destacada" style="background-color: rgba(255, 255, 255, 0.15); color: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 600; padding: 0.45rem 1rem; border-radius: 6px; cursor: pointer;">
+                            Leer Comunicado Completo →
+                        </button>
                     </div>
                 </div>
             </section>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
 
-                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;" id="noticias-feed-list">
                     
-                    <article class="card" style="padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
-                            <span class="badge badge-info" style="font-size: 0.75rem;">Capacitación & Desarrollo</span>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">05 de Sep, 2026</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;">
-                            Convocatoria Abierta: Programa de Certificación en Gestión de Proyectos y Liderazgo
-                        </h3>
-                        <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.5; margin-bottom: 1rem;">
-                            Se encuentra abierta la convocatoria anual de becas del 100% para cursos de certificación tecnológica y desarrollo de habilidades directivas. Consulta los requisitos e inscríbete antes de la fecha límite.
-                        </p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-muted);">
-                            <span>Por: Coordinación de Capacitación</span>
-                            <button class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">Leer Artículo</button>
-                        </div>
-                    </article>
-
-                    <article class="card" style="padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
-                            <span class="badge badge-success" style="font-size: 0.75rem;">Cultura & Integración</span>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">01 de Sep, 2026</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;">
-                            Torneo Anual Interempresarial Eslabón 2026: ¡Arma tu Equipo!
-                        </h3>
-                        <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.5; margin-bottom: 1rem;">
-                            Llega el torneo deportivo de integración de otoño. Consulta las disciplinas disponibles (Fútbol 7, Voleibol y Ajedrez) y registra a tu equipo con tus compañeros de área antes del 20 de septiembre.
-                        </p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-muted);">
-                            <span>Por: Comité de Eventos Institucionales</span>
-                            <button class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">Ver Convocatoria</button>
-                        </div>
-                    </article>
-
-                    <article class="card" style="padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
-                            <span class="badge badge-warning" style="font-size: 0.75rem;">Nómina & Cierres</span>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">28 de Ago, 2026</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;">
-                            Recordatorio: Cierre de Registro de Horas Extra e Incidencias (Q1 Sep)
-                        </h3>
-                        <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.5; margin-bottom: 1rem;">
-                            Se recuerda a todos los colaboradores verificar sus marcajes de asistencia y enviar cualquier solicitud de justificación o vacaciones antes de la fecha de corte quincenal.
-                        </p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-muted);">
-                            <span>Por: Departamento de Nóminas</span>
-                            <button class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">Ver Calendario</button>
-                        </div>
-                    </article>
-
                 </div>
 
                 <aside style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -123,34 +80,8 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             Calendario Institucional
                         </h3>
-                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
-                            <li style="display: flex; gap: 0.8rem; align-items: center;">
-                                <div style="background-color: var(--primary-dark); color: #FFFFFF; font-weight: 700; font-size: 0.8rem; padding: 0.4rem 0.6rem; border-radius: 6px; text-align: center; min-width: 44px;">
-                                    16<br><small style="font-size: 0.65rem; font-weight: 400;">SEP</small>
-                                </div>
-                                <div>
-                                    <strong style="font-size: 0.88rem; color: var(--primary-dark); display: block;">Día Feriado Oficial</strong>
-                                    <span style="font-size: 0.78rem; color: var(--text-muted);">Aniversario de la Independencia</span>
-                                </div>
-                            </li>
-                            <li style="display: flex; gap: 0.8rem; align-items: center;">
-                                <div style="background-color: #2563EB; color: #FFFFFF; font-weight: 700; font-size: 0.8rem; padding: 0.4rem 0.6rem; border-radius: 6px; text-align: center; min-width: 44px;">
-                                    25<br><small style="font-size: 0.65rem; font-weight: 400;">SEP</small>
-                                </div>
-                                <div>
-                                    <strong style="font-size: 0.88rem; color: var(--primary-dark); display: block;">Webinar de Salud Financiera</strong>
-                                    <span style="font-size: 0.78rem; color: var(--text-muted);">Transmisión en vivo • 11:00 AM</span>
-                                </div>
-                            </li>
-                            <li style="display: flex; gap: 0.8rem; align-items: center;">
-                                <div style="background-color: #059669; color: #FFFFFF; font-weight: 700; font-size: 0.8rem; padding: 0.4rem 0.6rem; border-radius: 6px; text-align: center; min-width: 44px;">
-                                    02<br><small style="font-size: 0.65rem; font-weight: 400;">OCT</small>
-                                </div>
-                                <div>
-                                    <strong style="font-size: 0.88rem; color: var(--primary-dark); display: block;">Townhall Trimestral Q3</strong>
-                                    <span style="font-size: 0.78rem; color: var(--text-muted);">Presentación de Resultados</span>
-                                </div>
-                            </li>
+                        <ul id="eventos-list-container" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                            
                         </ul>
                     </div>
 
@@ -166,6 +97,89 @@
 
             </div>
         </main>
+    </div>
+
+    <!-- Modal para Publicar / Editar Noticia (RH y Administradores) -->
+    <div class="modal-backdrop" id="modal-noticia">
+        <div class="modal-container" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-noticia-titulo">Publicar Nuevo Comunicado</h3>
+                <button type="button" class="btn-close-modal" id="btn-cerrar-modal-noticia">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="form-noticia" style="display: flex; flex-direction: column; overflow: hidden; margin: 0;">
+                <input type="hidden" id="noticia-id" value="">
+                <div class="modal-body" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; overflow-y: auto;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; display: block; color: var(--text-main);">Título del Comunicado *</label>
+                        <input type="text" id="noticia-input-titulo" class="form-input" placeholder="Ej. Actualización de Póliza de Gastos Médicos Mayores" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; display: block; color: var(--text-main);">Categoría *</label>
+                            <select id="noticia-input-categoria" class="form-input" required>
+                                <option value="Recursos Humanos">Recursos Humanos</option>
+                                <option value="Beneficios y Cultura">Beneficios y Cultura</option>
+                                <option value="Eventos Corporativos">Eventos Corporativos</option>
+                                <option value="Aviso General">Aviso General</option>
+                                <option value="Salud y Bienestar">Salud y Bienestar</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; display: block; color: var(--text-main);">Autor / Área *</label>
+                            <input type="text" id="noticia-input-autor" class="form-input" placeholder="Ej. Dirección de Talento Humano" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; display: block; color: var(--text-main);">Resumen Breve (Extracto) *</label>
+                        <textarea id="noticia-input-resumen" class="form-input" rows="2" placeholder="Resumen conciso visible en la tarjeta principal..." required></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; display: block; color: var(--text-main);">Contenido Completo de la Noticia *</label>
+                        <textarea id="noticia-input-contenido" class="form-input" rows="5" placeholder="Detalla aquí toda la información, fechas y consideraciones del comunicado..." required></textarea>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px; background-color: var(--bg-body); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <input type="checkbox" id="noticia-input-destacado" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="noticia-input-destacado" style="font-size: 0.88rem; font-weight: 600; color: var(--text-main); cursor: pointer; margin: 0;">
+                            Marcar como Comunicado Principal (Aparece en el banner superior)
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 1.2rem 1.5rem; border-top: 1px solid var(--border-color); background-color: var(--bg-card);">
+                    <button type="button" class="btn btn-outline" id="btn-cancelar-modal-noticia">Cancelar</button>
+                    <button type="submit" class="btn btn-accent" id="btn-guardar-noticia">Guardar y Publicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Leer Noticia Completa -->
+    <div class="modal-backdrop" id="modal-lectura-noticia">
+        <div class="modal-container" style="max-width: 680px;">
+            <div class="modal-header">
+                <div>
+                    <span class="badge badge-info" id="leer-noticia-categoria" style="font-size: 0.75rem; margin-bottom: 4px; display: inline-block;">COMUNICADO</span>
+                    <h3 class="modal-title" id="leer-noticia-titulo" style="font-size: 1.35rem; line-height: 1.3;">Título de la Noticia</h3>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;" id="leer-noticia-meta">Por Recursos Humanos • 10/10/2026</div>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-cerrar-leer-noticia">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.8rem; max-height: 60vh; overflow-y: auto;">
+                <p id="leer-noticia-resumen" style="font-size: 1rem; font-weight: 600; color: var(--primary-dark); line-height: 1.5; margin-bottom: 1.2rem; border-left: 3px solid var(--accent-color); padding-left: 12px;"></p>
+                <div id="leer-noticia-contenido" style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer" style="padding: 1rem 1.8rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; background-color: var(--bg-card);">
+                <button type="button" class="btn btn-outline" id="btn-cerrar-lectura-footer">Cerrar</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/js/controllers/noticias.ctrl.js"></script>

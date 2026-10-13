@@ -1365,6 +1365,156 @@ body.dark-mode .btn-tab-solicitud.active {
     color: #0F172A;
 }
 
+/* =========================================================
+   SweetAlert2 - Estilos Personalizados Portal RH / Atlas
+   ========================================================= */
+
+.swal2-container {
+    z-index: 99999 !important;
+    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.5) !important;
+}
+
+.atlas-swal-popup {
+    background: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-radius: 16px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    font-family: var(--font-family) !important;
+    padding: 2.2rem 2rem !important;
+    max-width: 440px !important;
+    width: 92% !important;
+}
+
+.atlas-swal-title {
+    color: var(--primary-dark) !important;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.3px;
+    margin-bottom: 0.6rem !important;
+    padding: 0 !important;
+}
+
+.atlas-swal-html {
+    color: var(--text-muted) !important;
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+    margin: 0.5rem 0 1.5rem 0 !important;
+    padding: 0 !important;
+}
+
+.swal2-actions {
+    margin-top: 1rem !important;
+    gap: 12px !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.atlas-swal-confirm-btn {
+    background-color: var(--accent-color) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.8rem !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.25) !important;
+    display: inline-block !important;
+}
+
+.atlas-swal-confirm-btn:hover {
+    filter: brightness(1.08) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(0, 184, 148, 0.35) !important;
+}
+
+.atlas-swal-cancel-btn {
+    background-color: transparent !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-block !important;
+}
+
+.atlas-swal-cancel-btn:hover {
+    color: var(--text-main) !important;
+    border-color: var(--text-muted) !important;
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Iconos de SweetAlert adaptados a la paleta */
+.swal2-icon.swal2-success {
+    border-color: var(--accent-color) !important;
+    color: var(--accent-color) !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--accent-color) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border-color: rgba(0, 184, 148, 0.3) !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: #F59E0B !important;
+    color: #F59E0B !important;
+}
+
+.swal2-icon.swal2-error {
+    border-color: #EF4444 !important;
+    color: #EF4444 !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: #EF4444 !important;
+}
+
+.swal2-icon.swal2-info {
+    border-color: var(--primary-light) !important;
+    color: var(--primary-light) !important;
+}
+
+/* Modo oscuro para SweetAlert */
+html.dark-mode .atlas-swal-popup,
+body.dark-mode .atlas-swal-popup {
+    background-color: #1E293B !important;
+    border-color: #334155 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+}
+
+html.dark-mode .atlas-swal-title,
+body.dark-mode .atlas-swal-title {
+    color: #F8FAFC !important;
+}
+
+html.dark-mode .atlas-swal-html,
+body.dark-mode .atlas-swal-html {
+    color: #94A3B8 !important;
+}
+
+html.dark-mode .atlas-swal-cancel-btn,
+body.dark-mode .atlas-swal-cancel-btn {
+    border-color: #334155 !important;
+    color: #94A3B8 !important;
+}
+
+html.dark-mode .atlas-swal-cancel-btn:hover,
+body.dark-mode .atlas-swal-cancel-btn:hover {
+    color: #F8FAFC !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+
 
 
 

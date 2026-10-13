@@ -1,13 +1,26 @@
 import { initLayout } from './layout.ctrl.js';
+import { fetchWithAuth } from '../config.js';
 import { SolicitudesModel } from '../models/solicitudes.model.js';
+import { NominaModel } from '../models/nomina.model.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = initLayout('inicio');
-    if (!user) return;
+    const sessionUser = initLayout('inicio');
+    if (!sessionUser) return;
 
-    const nombre = document.getElementById('bienvenida-text');
-    if (nombre) {
-        nombre.textContent = `¡Bienvenido de vuelta, ${user.name}!`;
+    let profileData = sessionUser;
+    try {
+        const response = await fetchWithAuth(`/perfil?empleado_id=${sessionUser.id || sessionUser.id_empleado}`);
+        if (response.ok) {
+            profileData = await response.json();
+        }
+    } catch (e) {
+        console.error('Error cargando perfil en dashboard main:', e);
+    }
+
+    const nombreEl = document.getElementById('bienvenida-text');
+    if (nombreEl) {
+        const displayName = profileData.nombre || sessionUser.nombre || sessionUser.name || 'Colaborador';
+        nombreEl.textContent = `¡Bienvenido de vuelta, ${displayName}!`;
     }
 
     const btnSolicitar = document.getElementById('solicitar-dia');
@@ -41,5 +54,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (numSolEl) {
         numSolEl.textContent = `${count} solicitud${count !== 1 ? 'es' : ''}`;
+    }
+
+    try {
+        const recibos = await NominaModel.getRecibos();
+        if (recibos && recibos.length > 0) {
+            const ultimo = recibos[0];
+            const statReciboVal = document.querySelector('.card.stat-card:nth-child(3) .stat-value');
+            if (statReciboVal) {
+                statReciboVal.textContent = ultimo.periodoNombre || `Q${ultimo.mes} ${ultimo.anio}`;
+            }
+        }
+    } catch (e) {
+        console.error('Error cargando último recibo en main dashboard:', e);
     }
 });

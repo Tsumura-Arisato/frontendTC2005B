@@ -1,6 +1,5 @@
 import { initLayout } from './layout.ctrl.js';
 import { fetchWithAuth } from '../config.js';
-import { resolveLocalAvatar } from '../models/auth.model.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const sessionUser = initLayout('perfil');
@@ -14,7 +13,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const response = await fetchWithAuth('/perfil');
+        const empleadoId = sessionUser.id || sessionUser.id_empleado;
+        const response = await fetchWithAuth(`/perfil?empleado_id=${empleadoId}`);
         if (response.ok) {
             const profileData = await response.json();
             renderProfile(profileData);
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderProfile(sessionUser);
         }
     } catch (error) {
-        console.warn('Backend API no disponible para /perfil, usando datos de sesión local:', error);
+        console.error('Error al cargar perfil desde la BD SQL Server:', error);
         renderProfile(sessionUser);
     }
 });
@@ -45,27 +45,25 @@ function renderProfile(data) {
     const rolEl = document.getElementById('perf-rol');
     const abonoEl = document.getElementById('perf-abono');
 
-    const nombre = data.nombre || data.name || 'Juan Pérez';
-    const puesto = data.puesto || 'Desarrollador Full Stack';
-    const departamento = data.departamento || 'Tecnología e Innovación';
+    const nombre = data.nombre || data.name || '';
+    const puesto = data.puesto || '';
+    const departamento = data.departamento || '';
 
     if (nameEl) nameEl.textContent = nombre;
-    if (subtitleEl) subtitleEl.textContent = `${puesto} • ${departamento}`;
+    if (subtitleEl) subtitleEl.textContent = puesto && departamento ? `${puesto} • ${departamento}` : (puesto || departamento);
     if (avatarEl) {
-        const rawAvatar = data.avatar || data.foto;
-        const idOrEmail = data.no_empleado || data.id || data.email || data.nombre;
-        avatarEl.src = resolveLocalAvatar(rawAvatar, idOrEmail);
+        avatarEl.src = data.avatar || '/assets/default-user.png';
         avatarEl.onerror = () => { avatarEl.src = '/assets/default-user.png'; };
     }
-    if (idEl) idEl.textContent = data.no_empleado || data.id || 'EP-4091';
+    if (idEl) idEl.textContent = data.no_empleado || data.id || '';
     if (puestoEl) puestoEl.textContent = puesto;
     if (deptEl) deptEl.textContent = departamento;
-    if (jefeEl) jefeEl.textContent = data.reporta_a || 'Ing. Carlos Mendoza (TI)';
-    if (ingresoEl) ingresoEl.textContent = data.fecha_ingreso || '15/01/2022';
-    if (rfcEl) rfcEl.textContent = data.rfc || 'PERJ920514HB8';
-    if (curpEl) curpEl.textContent = data.curp || 'PERJ920514HDFRRN09';
-    if (imssEl) imssEl.textContent = data.imss || '12948572019';
-    if (emailEl) emailEl.textContent = data.email || 'juan.perez@eslabon.com';
+    if (jefeEl) jefeEl.textContent = data.reporta_a || '-';
+    if (ingresoEl) ingresoEl.textContent = data.fecha_ingreso || '-';
+    if (rfcEl) rfcEl.textContent = data.rfc || '-';
+    if (curpEl) curpEl.textContent = data.curp || '-';
+    if (imssEl) imssEl.textContent = data.imss || '-';
+    if (emailEl) emailEl.textContent = data.email || data.username || '-';
     if (rolEl) rolEl.textContent = data.rol || data.role || 'Colaborador';
-    if (abonoEl) abonoEl.textContent = data.abono_cuenta || 'BBVA - CLABE: 012180015928374910';
+    if (abonoEl) abonoEl.textContent = data.abono_cuenta || '-';
 }

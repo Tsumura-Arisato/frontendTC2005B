@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/components.css">
+    <script src="/vendor/sweetalert2.all.min.js"></script>
 </head>
 
 <body>
@@ -29,51 +30,51 @@
 
             <header class="page-header">
                 <h1 class="title-primary">Kárdex de Asistencia y Tiempo Laborado</h1>
-                <p class="subtitle">Gestiona tu registro de asistencia, consulta las horas laboradas en el periodo, revisa tus horas extra acumuladas y mantén el control de tus jornadas laborales.</p>
+                <p class="subtitle">Consulta tu historial de asistencia auditado, revisa las horas ordinarias y extra acumuladas en el periodo y monitorea el cumplimiento de tus jornadas laborales.</p>
             </header>
 
             <section class="stats-grid">
                 <div class="card stat-card">
                     <div>
                         <div class="stat-title">Horas Laboradas (Mes Actual)</div>
-                        <div class="stat-value" id="kpi-horas-laboradas" style="color: var(--primary-dark);">152.5 hrs</div>
+                        <div class="stat-value" id="kpi-horas-laboradas" style="color: var(--primary-dark);">0.0 hrs</div>
                     </div>
                     <div class="stat-footer">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Meta mensual: 160.0 hrs</span>
-                        <span class="badge badge-success">95.3% Meta</span>
+                        <span class="badge badge-success" id="badge-meta">--% Meta</span>
                     </div>
                 </div>
 
                 <div class="card stat-card">
                     <div>
                         <div class="stat-title">Porcentaje de Asistencia</div>
-                        <div class="stat-value" id="kpi-tasa-asistencia" style="color: #059669;">95.0%</div>
+                        <div class="stat-value" id="kpi-tasa-asistencia" style="color: #059669;">--%</div>
                     </div>
                     <div class="stat-footer">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">19 Asistidos • 1 Falta</span>
-                        <span class="badge badge-info">Excelente</span>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);" id="kpi-asistidos-text">0 Asistidos</span>
+                        <span class="badge badge-info">Oficial</span>
                     </div>
                 </div>
 
                 <div class="card stat-card">
                     <div>
                         <div class="stat-title">Horas Extra Acumuladas</div>
-                        <div class="stat-value" id="kpi-horas-extra" style="color: #2563EB;">8.5 hrs</div>
+                        <div class="stat-value" id="kpi-horas-extra" style="color: #2563EB;">0.0 hrs</div>
                     </div>
                     <div class="stat-footer">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Aprobadas para pago</span>
-                        <span class="badge badge-warning">+2 quincena</span>
+                        <span class="badge badge-warning">Quincena</span>
                     </div>
                 </div>
 
                 <div class="card stat-card">
                     <div>
                         <div class="stat-title">Puntualidad Promedio</div>
-                        <div class="stat-value" id="kpi-promedio-entrada" style="color: #0D9488;">08:00 AM</div>
+                        <div class="stat-value" id="kpi-promedio-entrada" style="color: #0D9488;">--:--</div>
                     </div>
                     <div class="stat-footer">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Horario: 08:00 AM - 06:00 PM</span>
-                        <span class="badge badge-success">A tiempo</span>
+                        <span class="badge badge-success">Auditado</span>
                     </div>
                 </div>
             </section>
@@ -83,7 +84,7 @@
                 <div class="clock-live-card">
                     <div>
                         <div class="clock-card-header">
-                            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">MARCADOR DIGITAL EN TIEMPO REAL</span>
+                            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">MARCADOR BIOMÉTRICO (MODO CONSULTA)</span>
                             <span class="badge badge-success" id="badge-turno-status" style="background-color: rgba(255,255,255,0.2); color: white;">En Turno</span>
                         </div>
                         <div id="live-clock-time" class="live-time-display">00:00:00</div>
@@ -92,30 +93,23 @@
 
                     <div class="time-meta-grid">
                         <div class="time-meta-item">
-                            <span class="time-meta-label">Entrada Registrada:</span>
-                            <span class="time-meta-val" id="time-meta-checkin">08:00 AM</span>
+                            <span class="time-meta-label">Última Entrada:</span>
+                            <span class="time-meta-val" id="time-meta-checkin">--:--</span>
                         </div>
                         <div class="time-meta-item">
-                            <span class="time-meta-label">Salida Registrada:</span>
-                            <span class="time-meta-val" id="time-meta-checkout">06:00 PM</span>
+                            <span class="time-meta-label">Última Salida:</span>
+                            <span class="time-meta-val" id="time-meta-checkout">--:--</span>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn-clock" id="btn-checkin" style="flex: 1; cursor: pointer;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            Marcar Asistencia
-                        </button>
-                        <button class="btn-clock" id="btn-checkout" style="flex: 1; background-color: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); cursor: pointer;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            Marcar Salida
-                        </button>
+                    <div style="background-color: rgba(255, 255, 255, 0.12); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); text-align: center; font-size: 0.82rem; color: #FFFFFF;">
+                        🔒 El registro de marcaje se realiza exclusivamente desde los lectores biométricos y checadores autorizados en planta/oficina.
                     </div>
                 </div>
 
                 <div class="calendar-wrapper" style="max-width: 100%; margin: 0;">
                     <div class="calendar-header">
-                        <div class="calendar-month-title" id="cal-month-title">Septiembre 2026</div>
+                        <div class="calendar-month-title" id="cal-month-title">Cargando mes...</div>
                         <div class="calendar-nav-btns">
                             <button class="btn-cal-arrow" id="cal-prev-month" title="Mes anterior">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -149,12 +143,12 @@
 
             <section class="weekly-breakdown-card" style="margin-bottom: 2rem;">
                 <h3 style="font-size: 1.1rem; color: var(--primary-dark); font-weight: 700;">Balance Semanal de Tiempo Laborado</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Distribución de horas ordinarias y tiempo extraordinario por semana del mes.</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Distribución de horas ordinarias y tiempo extraordinario auditado por semana.</p>
 
                 <div class="weekly-bar-row">
                     <div class="weekly-bar-item">
                         <div class="weekly-bar-header">
-                            <span>Semana 1 (01 - 05 Sep)</span>
+                            <span>Semana 1</span>
                             <span>40.0 hrs / 40 hrs (100%)</span>
                         </div>
                         <div class="progress-track"><div class="progress-fill" style="width: 100%;"></div></div>
@@ -162,15 +156,7 @@
 
                     <div class="weekly-bar-item">
                         <div class="weekly-bar-header">
-                            <span>Semana 2 (08 - 12 Sep)</span>
-                            <span>42.5 hrs / 40 hrs <strong style="color: #2563EB;">(+2.5 hrs extra)</strong></span>
-                        </div>
-                        <div class="progress-track"><div class="progress-fill overtime" style="width: 100%;"></div></div>
-                    </div>
-
-                    <div class="weekly-bar-item">
-                        <div class="weekly-bar-header">
-                            <span>Semana 3 (15 - 19 Sep)</span>
+                            <span>Semana 2</span>
                             <span>40.0 hrs / 40 hrs (100%)</span>
                         </div>
                         <div class="progress-track"><div class="progress-fill" style="width: 100%;"></div></div>
@@ -178,10 +164,18 @@
 
                     <div class="weekly-bar-item">
                         <div class="weekly-bar-header">
-                            <span>Semana 4 (22 - 26 Sep)</span>
-                            <span>30.0 hrs / 40 hrs en curso</span>
+                            <span>Semana 3</span>
+                            <span>40.0 hrs / 40 hrs (100%)</span>
                         </div>
-                        <div class="progress-track"><div class="progress-fill" style="width: 75%;"></div></div>
+                        <div class="progress-track"><div class="progress-fill" style="width: 100%;"></div></div>
+                    </div>
+
+                    <div class="weekly-bar-item">
+                        <div class="weekly-bar-header">
+                            <span>Semana 4</span>
+                            <span>32.5 hrs / 40 hrs</span>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" style="width: 81%;"></div></div>
                     </div>
                 </div>
             </section>

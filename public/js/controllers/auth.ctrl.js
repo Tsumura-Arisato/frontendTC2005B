@@ -1,4 +1,5 @@
 import { AuthModel } from '../models/auth.model.js';
+import { showInfo } from '../utils/alert.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const activeUser = AuthModel.getCurrentUser();
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (forgotBtn) {
         forgotBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Por favor contacta al administrador de RH de tu empresa para restablecer tu contraseña.');
+            showInfo('Recuperación de Contraseña', 'Por favor contacta al administrador de Recursos Humanos de tu empresa para restablecer tu contraseña institucional.');
         });
     }
 

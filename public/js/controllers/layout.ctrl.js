@@ -1,11 +1,13 @@
 import { AuthModel } from '../models/auth.model.js';
 import { renderSidebar } from '../views/sidebar.view.js';
 import { renderNavbar } from '../views/navbar.view.js';
+import { fetchWithAuth } from '../config.js';
+import { initSweetAlert } from '../utils/alert.js';
 
 const THEME_KEY = 'eslabon_theme_preference';
 
 export function initLayout(activeRoute = 'inicio') {
-    
+    initSweetAlert();
     const currentUser = AuthModel.getCurrentUser();
     if (!currentUser) {
         window.location.replace('/');
@@ -20,7 +22,7 @@ export function initLayout(activeRoute = 'inicio') {
 
     const sidebarContainer = document.getElementById('sidebar-container');
     if (sidebarContainer) {
-        sidebarContainer.innerHTML = renderSidebar(activeRoute);
+        sidebarContainer.innerHTML = renderSidebar(activeRoute, currentUser);
     }
 
     const navbarContainer = document.getElementById('navbar-container');
@@ -34,22 +36,41 @@ export function initLayout(activeRoute = 'inicio') {
         }
     }
 
-    bindGlobalEvents();
+    bindGlobalEvents(currentUser);
+    syncThemeFromDB(currentUser.id);
 
     return currentUser;
 }
 
-function bindGlobalEvents() {
+function bindGlobalEvents(currentUser) {
     applyThemePreference();
 
     const themeBtn = document.getElementById('btn-theme-toggle');
     if (themeBtn) {
-        themeBtn.addEventListener('click', (e) => {
+        themeBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            document.documentElement.classList.toggle('dark-mode');
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-            updateThemeIcon(isDark);
+            const isDarkNow = !document.documentElement.classList.contains('dark-mode');
+            const newThemeStr = isDarkNow ? 'dark' : 'light';
+
+            applyThemePreference(isDarkNow);
+            localStorage.setItem(THEME_KEY, newThemeStr);
+
+            if (currentUser && currentUser.id) {
+                const prefObj = { theme: newThemeStr };
+                try {
+                    await fetchWithAuth('/preferencias', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            empleado_id: currentUser.id,
+                            usuario_id: currentUser.id,
+                            preferencias_accesibilidad: prefObj,
+                            tema: newThemeStr
+                        })
+                    });
+                } catch (err) {
+                    console.warn('Endpoint /preferencias no disponible en backend para guardar tema:', err);
+                }
+            }
         });
     }
 
@@ -92,9 +113,49 @@ function bindGlobalEvents() {
     }
 }
 
-function applyThemePreference() {
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    const isDark = savedTheme === 'dark';
+export async function syncThemeFromDB(userId) {
+    if (!userId) return;
+    try {
+        const response = await fetchWithAuth(`/perfil?empleado_id=${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            let rawPref = data.preferencias_accesibilidad;
+            let themeVal = null;
+
+            if (typeof rawPref === 'string') {
+                try {
+                    rawPref = JSON.parse(rawPref);
+                } catch (e) {
+                    
+                }
+            }
+
+            if (rawPref && typeof rawPref === 'object') {
+                themeVal = rawPref.theme || rawPref.tema;
+            } else if (data.tema_preferencia || data.theme_preference || data.tema) {
+                themeVal = data.tema_preferencia || data.theme_preference || data.tema;
+            }
+
+            if (themeVal && (themeVal === 'dark' || themeVal === 'light')) {
+                const isDark = themeVal === 'dark';
+                localStorage.setItem(THEME_KEY, themeVal);
+                applyThemePreference(isDark);
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudo sincronizar la preferencia de tema desde la BD:', e);
+    }
+}
+
+function applyThemePreference(forceState) {
+    let isDark;
+    if (typeof forceState === 'boolean') {
+        isDark = forceState;
+    } else {
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        isDark = savedTheme === 'dark';
+    }
+
     if (isDark) {
         document.documentElement.classList.add('dark-mode');
         document.body.classList.add('dark-mode');

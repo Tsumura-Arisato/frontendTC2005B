@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprobaciones de Equipo - Portal RH</title>
+    <link rel="icon" type="image/png" href="/assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/assets/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Portal RH" />
+
+    <script>
+        (function() {
+            if (localStorage.getItem("eslabon_theme_preference") === "dark") {
+                document.documentElement.classList.add("dark-mode");
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <script src="/vendor/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <div class="menu-overlay" id="menu-overlay"></div>
+
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+            <div id="navbar-container"></div>
+
+            <header class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                        <h1 class="title-primary" style="margin-bottom: 0;">Bandeja de Aprobaciones</h1>
+                        <span class="badge badge-accent" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Gestión de Equipo</span>
+                    </div>
+                    <p class="subtitle" style="margin-bottom: 0;">Supervisa, revisa en detalle y resuelve las solicitudes de vacaciones, préstamos y modificaciones de tu equipo de trabajo.</p>
+                </div>
+            </header>
+
+            <section class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Pendientes de Aprobación</div>
+                        <div class="stat-value" id="kpi-pendientes" style="color: #F59E0B;">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Requieren tu autorización</span>
+                        <span class="badge badge-warning">Atención</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Vacaciones del Mes</div>
+                        <div class="stat-value" id="kpi-vacaciones" style="color: var(--accent-color);">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Autorizadas este periodo</span>
+                        <span class="badge badge-success">Aprobadas</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Préstamos en Trámite</div>
+                        <div class="stat-value" id="kpi-prestamos" style="color: #2563EB;">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">En proceso administrativo</span>
+                        <span class="badge badge-info">Financiero</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Total de Solicitudes</div>
+                        <div class="stat-value" id="kpi-total" style="color: var(--primary-dark);">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Historial de tu departamento</span>
+                        <span class="badge">Equipo</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" style="margin-bottom: 1.5rem; padding: 1.2rem 1.5rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+                    <div style="display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; flex: 1; min-width: 280px;">
+                        <input type="text" id="input-search-equipo" class="form-input" placeholder="🔍 Buscar por nombre de colaborador, folio o motivo..." style="max-width: 380px; padding: 0.6rem 1rem; font-size: 0.9rem;">
+                        
+                        <select id="select-filter-estatus" class="form-input" style="width: auto; padding: 0.6rem 1rem; font-size: 0.9rem; cursor: pointer;">
+                            <option value="all">Todos los Estatus</option>
+                            <option value="Pendiente" selected>Solo Pendientes ⏳</option>
+                            <option value="Aprobada">Aprobadas ✓</option>
+                            <option value="Rechazada">Rechazadas ✗</option>
+                        </select>
+
+                        <select id="select-filter-tipo" class="form-input" style="width: auto; padding: 0.6rem 1rem; font-size: 0.9rem; cursor: pointer;">
+                            <option value="all">Todos los Tipos</option>
+                            <option value="vacaciones">Vacaciones 🌴</option>
+                            <option value="prestamos">Préstamos 💰</option>
+                            <option value="actualizacion_datos">Actualización Datos 📝</option>
+                        </select>
+                    </div>
+
+                    <div id="solicitudes-counter" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                        Cargando solicitudes del equipo...
+                    </div>
+                </div>
+            </section>
+
+            <section class="table-card" style="margin-bottom: 2rem;">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Folio</th>
+                                <th>Colaborador</th>
+                                <th style="width: 140px;">Tipo</th>
+                                <th>Detalle Solicitado</th>
+                                <th style="width: 120px;" class="text-center">Fecha</th>
+                                <th style="width: 120px;" class="text-center">Estatus</th>
+                                <th style="width: 220px;" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aprobaciones-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center" style="padding: 2.5rem; color: var(--text-muted);">
+                                    Cargando registros de tu equipo...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para Detalle de Solicitud de Equipo -->
+    <div class="modal-backdrop" id="modal-detalle-aprobacion">
+        <div class="modal-container" style="max-width: 650px;">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="modal-det-title">Detalle de Solicitud de Colaborador</h3>
+                    <span id="modal-det-folio" style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">Folio: SOL-000</span>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-cerrar-modal-det">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-det-content" style="padding: 1.5rem 1.8rem; display: flex; flex-direction: column; gap: 1rem; max-height: 65vh; overflow-y: auto;">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+            <div class="modal-footer" id="modal-det-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 1.2rem 1.8rem; border-top: 1px solid var(--border-color); background-color: var(--bg-card);">
+                <button type="button" class="btn btn-outline" id="btn-modal-det-cerrar">Cerrar</button>
+                <button type="button" class="btn btn-outline" id="btn-modal-det-rechazar" style="color: #EF4444; border-color: #EF4444;">Rechazar</button>
+                <button type="button" class="btn btn-accent" id="btn-modal-det-aprobar">Aprobar Solicitud</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/controllers/aprobaciones.ctrl.js"></script>
+</body>
+
+</html>
