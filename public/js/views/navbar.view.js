@@ -20,12 +20,14 @@ function resolveLocalAvatar(avatarStr, identifier) {
 export function renderNavbar(user) {
     let avatarSrc = '/assets/default-user.png';
     let userName = 'Colaborador';
-    let userRole = 'Cargando...';
+    let userRole = 'Portal de Colaborador';
 
     if (user) {
-        avatarSrc = resolveLocalAvatar(user.avatar || user.foto, user.id || user.name || user.email);
-        userName = user.name || 'Colaborador';
-        userRole = `Nómina: #${user.id} • ${user.role}`;
+        avatarSrc = resolveLocalAvatar(user.avatar || user.foto, user.id || user.nombre || user.name || user.email);
+        userName = user.nombre || user.name || user.username || 'Colaborador';
+        const numNomina = user.no_empleado || user.id_empleado || user.id || '';
+        const rolTexto = user.puesto || user.rol || user.role || 'Colaborador';
+        userRole = numNomina ? `Nómina: #${numNomina} • ${rolTexto}` : rolTexto;
     }
 
     return `

@@ -45,13 +45,18 @@ export const AuthModel = {
             const rawUser = data.user || data;
 
             const user = {
-                id: rawUser.id || rawUser.id_empleado,
+                id: rawUser.id || rawUser.id_empleado || 1,
+                id_empleado: rawUser.id_empleado || rawUser.id || 1,
+                id_usuario: rawUser.id_usuario || rawUser.id,
+                no_empleado: rawUser.no_empleado || rawUser.id_empleado || rawUser.id,
                 nombre: rawUser.nombre || '',
                 name: rawUser.nombre || '',
                 email: rawUser.email || rawUser.username || usernameOrEmail,
                 username: rawUser.username || usernameOrEmail,
                 role: rawUser.rol || 'Colaborador',
                 rol: rawUser.rol || 'Colaborador',
+                puesto: rawUser.puesto || '',
+                departamento: rawUser.departamento || '',
                 avatar: resolveLocalAvatar(rawUser.avatar, rawUser.id)
             };
 
@@ -96,8 +101,27 @@ export const AuthModel = {
                 throw new Error(errorMessage);
             }
 
+            const rawUser = data.user || currentUser || {};
+            const normalizedUser = {
+                ...currentUser,
+                ...rawUser,
+                id: rawUser.id || rawUser.id_empleado || currentUser?.id,
+                id_empleado: rawUser.id_empleado || rawUser.id || currentUser?.id_empleado,
+                id_usuario: rawUser.id_usuario || currentUser?.id_usuario || rawUser.id,
+                no_empleado: rawUser.no_empleado || rawUser.id_empleado || currentUser?.no_empleado || rawUser.id,
+                nombre: rawUser.nombre || currentUser?.nombre || '',
+                name: rawUser.nombre || currentUser?.name || currentUser?.nombre || '',
+                email: rawUser.email || currentUser?.email || '',
+                username: rawUser.username || currentUser?.username || '',
+                role: rawUser.rol || rawUser.role || currentUser?.role || currentUser?.rol || 'Colaborador',
+                rol: rawUser.rol || rawUser.role || currentUser?.rol || currentUser?.role || 'Colaborador',
+                puesto: rawUser.puesto || currentUser?.puesto || '',
+                departamento: rawUser.departamento || currentUser?.departamento || '',
+                avatar: resolveLocalAvatar(rawUser.avatar || currentUser?.avatar, rawUser.id || currentUser?.id)
+            };
+
             if (data.token) {
-                setSession(data.token, data.user || currentUser);
+                setSession(data.token, normalizedUser);
             }
             return data;
         } catch (error) {

@@ -19,6 +19,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const currentUserId = sessionUser.id || sessionUser.id_empleado || 1;
+    const userPuesto = (sessionUser.puesto || '').toLowerCase();
+    const userDepto = sessionUser.departamento || '';
+    const isJefeJefazo = ['director', 'directora'].some(w => userPuesto.includes(w)) || (userRole.includes('administrador') && !userPuesto.includes('especialista'));
+
+    // Personalizar encabezado según el rol
+    const pageTitle = document.getElementById('page-approvals-title');
+    const pageBadge = document.getElementById('page-approvals-badge');
+    const pageSubtitle = document.getElementById('page-approvals-subtitle');
+
+    if (pageTitle && pageBadge && pageSubtitle) {
+        if (isJefeJefazo) {
+            pageTitle.textContent = 'Aprobación de Solicitudes de Jefes de Área';
+            pageBadge.textContent = 'Dirección General';
+            pageBadge.style.backgroundColor = '#9333EA';
+            pageSubtitle.textContent = 'Bandeja ejecutiva exclusiva para evaluar y resolver las solicitudes de los Gerentes y Jefes de Departamento de la organización.';
+        } else {
+            pageTitle.textContent = `Aprobaciones - ${userDepto || 'Tu Departamento'}`;
+            pageBadge.textContent = (sessionUser.rol || 'Líder').toUpperCase();
+            pageSubtitle.textContent = `Bandeja de entrada para supervisar y autorizar solicitudes de los colaboradores de ${userDepto || 'tu equipo'}.`;
+        }
+    }
 
     // Listeners de filtros
     const searchInput = document.getElementById('input-search-equipo');
@@ -124,12 +145,21 @@ function renderTable(list) {
     }
 
     if (list.length === 0) {
+        const sessionUser = JSON.parse(localStorage.getItem('eslabon_current_user') || '{}');
+        const userPuesto = (sessionUser.puesto || '').toLowerCase();
+        const userRole = (sessionUser.rol || '').toLowerCase();
+        const isJefazo = ['director', 'directora'].some(w => userPuesto.includes(w)) || (userRole.includes('administrador') && !userPuesto.includes('especialista'));
+
+        const emptyMessage = isJefazo
+            ? 'Actualmente no hay solicitudes registradas de los Jefes o Gerentes de área. Las solicitudes de colaboradores operativos son evaluadas directamente por sus jefes departamentales.'
+            : 'No hay solicitudes que coincidan con los filtros para tu departamento.';
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📁</div>
-                    <div style="font-weight: 700; color: var(--primary-dark); margin-bottom: 0.2rem;">No hay solicitudes que coincidan con los filtros</div>
-                    <div style="font-size: 0.85rem;">Prueba seleccionando otro estatus o borrando el término de búsqueda.</div>
+                    <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📁</div>
+                    <div style="font-weight: 700; color: var(--primary-dark); margin-bottom: 0.4rem;">Sin Solicitudes Pendientes</div>
+                    <div style="font-size: 0.88rem; max-width: 520px; margin: 0 auto; line-height: 1.5;">${emptyMessage}</div>
                 </td>
             </tr>
         `;

@@ -105,11 +105,19 @@ function formatSolicitud(raw) {
 }
 
 const directorioColaboradores = {
-    1: { nombre: 'Juan Pérez González', puesto: 'Desarrollador Full Stack', depto: 'Tecnología e Innovación' },
-    3: { nombre: 'Carlos Mendoza Sánchez', puesto: 'Gerente de TI', depto: 'Tecnología e Innovación' },
-    4: { nombre: 'Fernando Morales Alonso', puesto: 'Líder Técnico Frontend', depto: 'Tecnología e Innovación' },
-    5: { nombre: 'Diana Navarro Reyes', puesto: 'Diseñadora UI/UX', depto: 'Tecnología e Innovación' },
-    6: { nombre: 'Roberto Soto Prieto', puesto: 'Ingeniero DevOps', depto: 'Tecnología e Innovación' }
+    1: { nombre: 'Carlos Mendoza Sánchez', puesto: 'Gerente de TI', depto: 'Tecnología e Innovación' },
+    2: { nombre: 'Laura Patricia Guzmán', puesto: 'Directora de Talento Humano', depto: 'Recursos Humanos' },
+    3: { nombre: 'Rodrigo Castillejos', puesto: 'Gerente de Contabilidad', depto: 'Finanzas y Contabilidad' },
+    4: { nombre: 'Mariana Valenzuela', puesto: 'Gerente de Operaciones', depto: 'Operaciones y Logística' },
+    5: { nombre: 'Juan Pérez González', puesto: 'Desarrollador Full Stack', depto: 'Tecnología e Innovación' },
+    6: { nombre: 'María López Carrasco', puesto: 'Especialista en Nóminas', depto: 'Recursos Humanos' },
+    7: { nombre: 'Fernando Morales Alonso', puesto: 'Líder Técnico Frontend', depto: 'Tecnología e Innovación' },
+    8: { nombre: 'Diana Navarro Reyes', puesto: 'Diseñadora UI/UX', depto: 'Tecnología e Innovación' },
+    9: { nombre: 'Roberto Soto Prieto', puesto: 'Ingeniero DevOps', depto: 'Tecnología e Innovación' },
+    10: { nombre: 'Alejandro Vargas Ramos', puesto: 'Reclutador Sr.', depto: 'Recursos Humanos' },
+    11: { nombre: 'Claudia Méndez Vázquez', puesto: 'Analista Contable', depto: 'Finanzas y Contabilidad' },
+    12: { nombre: 'Gabriel Herrera Lara', puesto: 'Analista Fiscal', depto: 'Finanzas y Contabilidad' },
+    13: { nombre: 'Javier Ortiz Ramos', puesto: 'Coordinador de Logística', depto: 'Operaciones y Logística' }
 };
 
 export const SolicitudesModel = {
@@ -131,87 +139,50 @@ export const SolicitudesModel = {
     },
 
     async getSolicitudesEquipo(managerId) {
-        // 1. Intentar endpoint dedicado de equipo en backend
         try {
             const response = await fetchWithAuth(`/solicitudes/equipo?jefe_id=${managerId}`);
             if (response.ok) {
                 const data = await response.json();
-                const list = Array.isArray(data) ? data : (data && Array.isArray(data.solicitudes) ? data.solicitudes : []);
-                if (Array.isArray(list) && list.length > 0) {
+                const list = Array.isArray(data) ? data : (data && Array.isArray(data.solicitudes) ? data.solicitudes : null);
+                if (list !== null) {
                     return list.map(formatSolicitud);
                 }
             }
         } catch (error) {
-            console.warn('Endpoint /solicitudes/equipo no disponible aún, usando fallback:', error);
-        }
-
-        // 2. Fallback resiliente: consultar solicitudes de colaboradores del departamento
-        try {
-            const teamMemberIds = [1, 4, 5, 6].filter(id => id !== Number(managerId));
-            const results = await Promise.all(
-                teamMemberIds.map(async id => {
-                    try {
-                        const res = await fetchWithAuth(`/solicitudes?empleado_id=${id}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            return Array.isArray(data) ? data : (data.solicitudes || []);
-                        }
-                    } catch (e) {
-                        return [];
-                    }
-                    return [];
-                })
-            );
-
-            const allTeamSols = results.flat();
-            if (allTeamSols.length > 0) {
-                return allTeamSols.map(formatSolicitud);
-            }
-        } catch (e) {
-            console.error('Error cargando solicitudes fallback del equipo:', e);
+            console.error('Error al consultar solicitudes de equipo:', error);
         }
 
         return [];
     },
 
     async aprobarSolicitud(id, autorizadorId = 1) {
-        try {
-            const response = await fetchWithAuth(`/solicitudes/${id}/aprobar`, {
-                method: 'PUT',
-                body: JSON.stringify({ autorizador_id: autorizadorId })
-            });
+        const response = await fetchWithAuth(`/solicitudes/${id}/aprobar`, {
+            method: 'PUT',
+            body: JSON.stringify({ autorizador_id: autorizadorId })
+        });
 
-            if (response.ok) {
-                return await response.json();
-            } else {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || 'No se pudo aprobar la solicitud.');
-            }
-        } catch (error) {
-            console.warn('Endpoint PUT /solicitudes/:id/aprobar no disponible en backend, aplicando respuesta simulada:', error);
-            return { success: true, message: 'Solicitud autorizada exitosamente.' };
+        if (response.ok) {
+            return await response.json();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'No se pudo aprobar la solicitud.');
         }
     },
 
     async rechazarSolicitud(id, autorizadorId = 1, motivoRechazo = '') {
-        try {
-            const response = await fetchWithAuth(`/solicitudes/${id}/rechazar`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    autorizador_id: autorizadorId,
-                    motivo_rechazo: motivoRechazo
-                })
-            });
+        const response = await fetchWithAuth(`/solicitudes/${id}/rechazar`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                autorizador_id: autorizadorId,
+                motivo_rechazo: motivoRechazo
+            })
+        });
 
-            if (response.ok) {
-                return await response.json();
-            } else {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || 'No se pudo rechazar la solicitud.');
-            }
-        } catch (error) {
-            console.warn('Endpoint PUT /solicitudes/:id/rechazar no disponible en backend, aplicando respuesta simulada:', error);
-            return { success: true, message: 'Solicitud rechazada con motivo registrado.' };
+        if (response.ok) {
+            return await response.json();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'No se pudo rechazar la solicitud.');
         }
     },
 

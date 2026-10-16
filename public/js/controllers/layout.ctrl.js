@@ -119,6 +119,37 @@ export async function syncThemeFromDB(userId) {
         const response = await fetchWithAuth(`/perfil?empleado_id=${userId}`);
         if (response.ok) {
             const data = await response.json();
+
+            // Refrescar inmediatamente el nombre y rol del navbar desde la base de datos
+            const displayNameEl = document.getElementById('user-display-name');
+            const displayRoleEl = document.getElementById('user-display-role');
+            const nombre = data.nombre || data.name;
+            const puesto = data.puesto || data.rol || 'Colaborador';
+            const numNomina = data.no_empleado || data.id || userId;
+
+            if (displayNameEl && nombre) {
+                displayNameEl.textContent = nombre;
+            }
+            if (displayRoleEl) {
+                displayRoleEl.textContent = `Nómina: #${numNomina} • ${puesto}`;
+            }
+
+            // Actualizar la sesión en localStorage para persistir los datos de la base de datos
+            const storedUser = AuthModel.getCurrentUser() || {};
+            const updatedUser = {
+                ...storedUser,
+                ...data,
+                id: data.id || storedUser.id || userId,
+                id_empleado: data.id || storedUser.id_empleado || userId,
+                nombre: nombre || storedUser.nombre || '',
+                name: nombre || storedUser.name || '',
+                rol: data.rol || storedUser.rol || 'Colaborador',
+                role: data.rol || storedUser.role || 'Colaborador',
+                puesto: puesto,
+                departamento: data.departamento || storedUser.departamento || ''
+            };
+            localStorage.setItem('eslabon_active_user', JSON.stringify(updatedUser));
+
             let rawPref = data.preferencias_accesibilidad;
             let themeVal = null;
 
@@ -143,7 +174,7 @@ export async function syncThemeFromDB(userId) {
             }
         }
     } catch (e) {
-        console.warn('No se pudo sincronizar la preferencia de tema desde la BD:', e);
+        console.warn('No se pudo sincronizar el perfil o tema desde la BD:', e);
     }
 }
 
