@@ -13,9 +13,7 @@
     <link rel="manifest" href="/site.webmanifest" />
     <script>
         (function() {
-            if (localStorage.getItem("eslabon_theme_preference") === "dark") {
-                document.documentElement.classList.add("dark-mode");
-            }
+            if (localStorage.getItem("eslabon_theme_preference") === "dark") { document.documentElement.classList.add("dark-mode"); } try { const b = JSON.parse(localStorage.getItem("eslabon_custom_branding") || "{}"); if (b.primaryDark) document.documentElement.style.setProperty("--primary-dark", b.primaryDark); if (b.primaryLight) document.documentElement.style.setProperty("--primary-light", b.primaryLight); if (b.accentColor) document.documentElement.style.setProperty("--accent-color", b.accentColor); if (b.accentLight) document.documentElement.style.setProperty("--accent-light", b.accentLight); } catch(e) {}
         })();
     </script>
     <link rel="stylesheet" href="/css/base.css">

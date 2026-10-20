@@ -1,3 +1,27 @@
+import { getStoredBranding } from '../utils/branding.js';
+
+function getNavbarCenterLogoHtml() {
+    const config = getStoredBranding();
+    if (config.logoUrl) {
+        return `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 100%;">
+                <img id="navbar-center-logo-img" src="${config.logoUrl}" alt="${config.companyName || 'Logo Empresa'}" 
+                     style="max-height: 38px; max-width: 160px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.06));"
+                     onerror="this.style.display='none'; const el = document.getElementById('navbar-center-company-name'); if(el) el.style.display='inline-block';">
+                ${config.companyName ? `<span id="navbar-center-company-name" style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px; color: var(--primary-dark); text-transform: uppercase;">${config.companyName}</span>` : ''}
+            </div>
+        `;
+    }
+    if (config.companyName) {
+        return `
+            <span id="navbar-center-company-name" style="font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; color: var(--primary-dark); text-transform: uppercase;">
+                ${config.companyName}
+            </span>
+        `;
+    }
+    return '';
+}
+
 function resolveLocalAvatar(avatarStr, identifier) {
     if (avatarStr && typeof avatarStr === 'string') {
         if (avatarStr.includes('default-user')) {
@@ -44,6 +68,11 @@ export function renderNavbar(user) {
             ESLABÓN
           </h2>
         </div>
+      </div>
+
+      <!-- Logotipo e Identidad de Marca Corporativa en el Centro del Navbar -->
+      <div class="navbar-brand-center" id="navbar-brand-center" style="display: flex; align-items: center; justify-content: center; flex: 1; margin: 0 1rem; max-height: 44px; overflow: hidden; text-align: center;">
+        ${getNavbarCenterLogoHtml()}
       </div>
 
       <div class="header-actions">

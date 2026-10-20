@@ -1,7 +1,11 @@
 import { setSession, API_BASE_URL } from '../config.js';
 import { showSuccess, showError } from '../utils/alert.js';
+import { applyBranding, syncBrandingFromDB } from '../utils/branding.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyBranding();
+    syncBrandingFromDB();
+
     const tempUserRaw = sessionStorage.getItem('eslabon_temp_user') || localStorage.getItem('eslabon_temp_user');
     const tempToken = sessionStorage.getItem('eslabon_temp_token') || localStorage.getItem('eslabon_temp_token');
 

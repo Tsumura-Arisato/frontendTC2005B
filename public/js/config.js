@@ -1,5 +1,13 @@
 export const API_BASE_URL = 'http://localhost:3000/api';
 
+/**
+ * Personalización Multi-Empresa (White-Label):
+ * Si vendes o despliegas este frontend para un cliente específico, especifica aquí el identificador
+ * de la empresa (ej: 'coca-cola', 'atlas', 'tec', 'starbucks', 'santander').
+ * Si se deja vacío (''), cargará automáticamente la empresa activa configurada en la base de datos SQL Server.
+ */
+export const DEFAULT_TENANT_COMPANY = 'atlas';
+
 const TOKEN_KEY = 'eslabon_jwt_token';
 const USER_KEY = 'eslabon_active_user';
 

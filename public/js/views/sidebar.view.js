@@ -1,6 +1,7 @@
 export function renderSidebar(activeRoute = 'inicio', currentUser = null) {
     const userRole = (currentUser?.rol || localStorage.getItem('eslabon_user_role') || '').toLowerCase();
-    const isManagerOrAdmin = ['administrador', 'jefe', 'gerente', 'director', 'recursos humanos', 'rh'].some(r => userRole.includes(r));
+    const isManagerOrAdmin = ['administrador', 'admin', 'jefe', 'gerente', 'director', 'recursos humanos', 'rh'].some(r => userRole.includes(r));
+    const isAdmin = userRole.includes('administrador') || userRole.includes('admin');
 
     const routes = [
         { id: 'inicio', name: 'Inicio', href: '/pages/main.html', icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>' },
@@ -24,13 +25,23 @@ export function renderSidebar(activeRoute = 'inicio', currentUser = null) {
         });
     }
 
+    if (isAdmin) {
+        routes.push({
+            id: 'personalizacion',
+            name: 'Personalización y Marca',
+            href: '/pages/personalizacion.html',
+            icon: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><path d="M12 22.7c4.97 0 9-4.03 9-9 0-3.32-2.18-6.13-5.2-7.29L12 2.69 8.2 6.41C5.18 7.57 3 10.38 3 13.7c0 4.97 4.03 9 9 9z"></path>',
+            badge: 'Admin'
+        });
+    }
+
     routes.push(
         { id: 'nomina', name: 'Recibos de Nómina', href: '/pages/nomina.html', icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>' },
         { id: 'kardex', name: 'Kárdex y Asistencia', href: '/pages/kardex.html', icon: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line>' },
         { id: 'noticias', name: 'Noticias y Comunicados', href: '/pages/noticias.html', icon: '<path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M2 19h10"></path>' },
         { id: 'gamificacion', name: 'Gamificación', href: '/pages/gamificacion.html', icon: '<polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon>' },
         { id: 'chatbot', name: 'Asistente RRHH', href: '/pages/chatbot.html', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>' },
-	{ id: 'perfil', name: 'Perfil', href: '/pages/perfil.html', icon: '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>' }
+        { id: 'perfil', name: 'Perfil', href: '/pages/perfil.html', icon: '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>' }
     );
 
     return `

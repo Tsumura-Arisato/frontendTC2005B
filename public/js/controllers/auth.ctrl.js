@@ -1,7 +1,11 @@
 import { AuthModel } from '../models/auth.model.js';
 import { showInfo, showSuccess } from '../utils/alert.js';
+import { applyBranding, syncBrandingFromDB } from '../utils/branding.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyBranding();
+    syncBrandingFromDB();
+
     const activeUser = AuthModel.getCurrentUser();
     const is2FAVerified = localStorage.getItem('eslabon_2fa_verified') === 'true';
 

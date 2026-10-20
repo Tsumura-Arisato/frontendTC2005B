@@ -57,6 +57,9 @@ export const AuthModel = {
                 rol: rawUser.rol || 'Colaborador',
                 puesto: rawUser.puesto || '',
                 departamento: rawUser.departamento || '',
+                id_empresa: rawUser.id_empresa || rawUser.empresa_id || data.id_empresa || null,
+                empresa: rawUser.empresa || rawUser.nombre_empresa || data.empresa || '',
+                nombre_empresa: rawUser.nombre_empresa || rawUser.empresa || data.nombre_empresa || '',
                 avatar: resolveLocalAvatar(rawUser.avatar, rawUser.id)
             };
 
@@ -133,6 +136,9 @@ export const AuthModel = {
                 rol: rawUser.rol || rawUser.role || currentUser?.rol || currentUser?.role || 'Colaborador',
                 puesto: rawUser.puesto || currentUser?.puesto || '',
                 departamento: rawUser.departamento || currentUser?.departamento || '',
+                id_empresa: rawUser.id_empresa || rawUser.empresa_id || currentUser?.id_empresa || data.id_empresa || null,
+                empresa: rawUser.empresa || rawUser.nombre_empresa || currentUser?.empresa || data.empresa || '',
+                nombre_empresa: rawUser.nombre_empresa || rawUser.empresa || currentUser?.nombre_empresa || data.nombre_empresa || '',
                 avatar: resolveLocalAvatar(rawUser.avatar || currentUser?.avatar, rawUser.id || currentUser?.id)
             };
 

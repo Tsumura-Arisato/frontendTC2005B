@@ -3,6 +3,7 @@ import { renderSidebar } from '../views/sidebar.view.js';
 import { renderNavbar } from '../views/navbar.view.js';
 import { fetchWithAuth } from '../config.js';
 import { initSweetAlert } from '../utils/alert.js';
+import { applyBranding, syncBrandingFromDB } from '../utils/branding.js';
 
 const THEME_KEY = 'eslabon_theme_preference';
 
@@ -37,6 +38,8 @@ export function initLayout(activeRoute = 'inicio') {
     }
 
     bindGlobalEvents(currentUser);
+    applyBranding();
+    syncBrandingFromDB();
     syncThemeFromDB(currentUser.id);
 
     return currentUser;

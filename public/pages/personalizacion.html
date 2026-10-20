@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalización y Marca - Portal RH</title>
+    <link rel="icon" type="image/png" href="/assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/assets/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Portal RH" />
+
+    <script>
+        (function() {
+            if (localStorage.getItem("eslabon_theme_preference") === "dark") {
+                document.documentElement.classList.add("dark-mode");
+            }
+            try {
+                const b = JSON.parse(localStorage.getItem('eslabon_custom_branding') || '{}');
+                if (b.primaryDark) document.documentElement.style.setProperty('--primary-dark', b.primaryDark);
+                if (b.primaryLight) document.documentElement.style.setProperty('--primary-light', b.primaryLight);
+                if (b.accentColor) document.documentElement.style.setProperty('--accent-color', b.accentColor);
+                if (b.accentLight) document.documentElement.style.setProperty('--accent-light', b.accentLight);
+            } catch(e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <script src="/vendor/sweetalert2.all.min.js"></script>
+
+    <style>
+        .preset-card {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .preset-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-light);
+            box-shadow: 0 8px 16px -4px rgba(0,0,0,0.08);
+        }
+        .preset-card.active-preset {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.02);
+        }
+        .palette-preview-bar {
+            height: 12px;
+            border-radius: 6px;
+            display: flex;
+            overflow: hidden;
+            margin-top: 0.8rem;
+        }
+        .color-input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .color-picker-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+        .live-preview-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: #F8FAFC;
+        }
+        body.dark-mode .live-preview-box {
+            background: #0B1120;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <div class="menu-overlay" id="menu-overlay"></div>
+
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+            <div id="navbar-container"></div>
+
+            <header class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                        <h1 class="title-primary" style="margin-bottom: 0;">Personalización y Marca Corporativa</h1>
+                        <span class="badge badge-accent" style="font-size: 0.75rem; text-transform: uppercase;">Solo Administrador</span>
+                    </div>
+                    <p class="subtitle" style="margin-bottom: 0;">
+                        Adapta la identidad de Eslabón Cloud para tu empresa. Cambia la paleta de colores y define el logotipo corporativo que se mostrará en el centro de la barra superior de todo el portal.
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" id="btn-restablecer-branding" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                        Restablecer Original
+                    </button>
+                    <button class="btn btn-primary" id="btn-guardar-branding" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Guardar y Aplicar
+                    </button>
+                </div>
+            </header>
+
+            <!-- BANNER DE AISLAMIENTO MULTI-EMPRESA -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(37, 99, 235, 0.01) 100%); border-left: 5px solid var(--primary-dark); margin-bottom: 2rem; padding: 1.25rem 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1.2rem;">
+                        <div style="width: 52px; height: 52px; border-radius: 10px; background: white; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 6px; overflow: hidden;">
+                            <img id="admin-empresa-logo-badge" src="/assets/favicon/favicon.svg" alt="Logo Empresa" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">
+                                Administrando Exclusivamente tu Empresa
+                            </div>
+                            <h2 id="admin-empresa-nombre" style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin: 0.1rem 0;">
+                                ATLAS SOLUTIONS S.A. DE C.V.
+                            </h2>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="badge badge-accent" id="admin-empresa-id-badge" style="font-size: 0.8rem; padding: 6px 12px;">Empresa ID #1</span>
+                        <span class="badge" style="background: #E2E8F0; color: #334155; font-size: 0.8rem; padding: 6px 12px; font-weight: 600;">Rol: Administrador</span>
+                    </div>
+                </div>
+                <div style="font-size: 0.83rem; color: var(--text-muted); margin-top: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 0.6rem;">
+                    🔒 <b>Aislamiento Multi-Empresa:</b> Como Administrador, los cambios de colores y logotipo que realices aquí se aplicarán <b>únicamente</b> a los colaboradores de tu empresa (<span id="admin-empresa-nombre-resumen">tu empresa</span>).
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: TEMAS Y PALETAS RECOMENDADAS -->
+            <section class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem;">
+                    <div>
+                        <h2 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.2rem;">
+                            1. Paletas y Estilos Rápidos (1 Clic)
+                        </h2>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
+                            Selecciona una combinación probada con contraste seguro para tu empresa, o crea una a medida abajo.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;" id="presets-container">
+                    <!-- Las tarjetas de preset se renderizan dinámicamente -->
+                </div>
+            </section>
+
+            <!-- SECCIÓN 2: FORMULARIO DE PERSONALIZACIÓN Y LOGO -->
+            <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 2rem; margin-bottom: 2rem;">
+                
+                <section class="card">
+                    <h2 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.4rem;">
+                        2. Identidad y Logotipo Central
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        Configura el nombre de tu empresa y el logotipo oficial que se visualizará en el centro del Navbar.
+                    </p>
+
+                    <form id="form-branding" style="display: flex; flex-direction: column; gap: 1.3rem;">
+                        
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Nombre Completo / Razón Social</label>
+                            <input type="text" id="brand-company-name" class="form-input" placeholder="Ej. Coca-Cola FEMSA, Atlas Solutions..." style="width: 100%;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Nombre Corto en Navbar</label>
+                            <input type="text" id="brand-short-name" class="form-input" placeholder="Ej. Coca-Cola FEMSA, Atlas..." style="width: 100%;">
+                            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">
+                                Texto que acompañará al logotipo en el centro de la barra superior.
+                            </small>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Logotipo de la Empresa (URL o Imagen)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="brand-logo-url" class="form-input" placeholder="https://ejemplo.com/logo.svg o URL de imagen..." style="flex: 1;">
+                                <label class="btn btn-secondary" style="margin: 0; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                    Subir Logo
+                                    <input type="file" id="input-file-logo" accept="image/*" style="display: none;">
+                                </label>
+                            </div>
+                            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">
+                                Recomendado: Formato SVG o PNG con fondo transparente (altura máx. 44px).
+                            </small>
+                        </div>
+
+                        <!-- GENERADOR RÁPIDO DE PALETA SEGURA -->
+                        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--primary-dark); font-size: 0.9rem;">
+                                        🎨 Generador de Paleta Armónica
+                                    </div>
+                                    <small style="color: var(--text-muted); font-size: 0.78rem;">
+                                        Elige un color primario y el sistema calculará tonos seguros que no destruyen la web.
+                                    </small>
+                                </div>
+                                <button type="button" id="btn-generar-paleta" class="btn btn-secondary btn-sm" style="font-size: 0.78rem;">
+                                    ✨ Auto-Generar
+                                </button>
+                            </div>
+
+                            <div class="color-input-row" style="margin-bottom: 1rem;">
+                                <input type="color" id="picker-primary-main" class="color-picker-box" value="#1A365D">
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Color Base de Marca</label>
+                                    <input type="text" id="text-primary-main" class="form-input font-mono" value="#1A365D" maxlength="7" style="width: 100%;">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Color Primario Oscuro</label>
+                                    <div class="color-input-row">
+                                        <input type="color" id="picker-primary-dark" class="color-picker-box" style="width: 36px; height: 36px;" value="#1A365D">
+                                        <input type="text" id="text-primary-dark" class="form-input font-mono" style="padding: 4px 8px; font-size: 0.85rem;" value="#1A365D">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Color de Acento / Botones</label>
+                                    <div class="color-input-row">
+                                        <input type="color" id="picker-accent-color" class="color-picker-box" style="width: 36px; height: 36px;" value="#00B894">
+                                        <input type="text" id="text-accent-color" class="form-input font-mono" style="padding: 4px 8px; font-size: 0.85rem;" value="#00B894">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </section>
+
+                <!-- SECCIÓN 3: VISTA PREVIA EN VIVO (LIVE SANDBOX) -->
+                <section class="card" style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin: 0;">
+                            3. Vista Previa en Tiempo Real
+                        </h2>
+                        <span class="badge badge-success" style="font-size: 0.72rem;">Contraste Protegido</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        Así se verán el Navbar centrado, los botones y los componentes en todas las pantallas:
+                    </p>
+
+                    <div class="live-preview-box" id="preview-sandbox" style="flex: 1; display: flex; flex-direction: column; gap: 1.2rem;">
+                        
+                        <!-- Simulador de Barra Superior (Navbar) -->
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.8rem 1.2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 24px; height: 2px; background: #64748B; box-shadow: 0 6px 0 #64748B, 0 -6px 0 #64748B;"></div>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: #1E293B;">ESLABÓN</span>
+                            </div>
+
+                            <!-- LOGO CENTRAL SIMULADO -->
+                            <div id="preview-navbar-center" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <img id="preview-logo-img" src="/assets/favicon/favicon.svg" alt="Preview Logo" style="max-height: 32px; max-width: 130px; object-fit: contain;">
+                                <span id="preview-company-name-text" style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; color: #1A365D; text-transform: uppercase;">Atlas Solutions</span>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: #E2E8F0;"></div>
+                                <div style="font-size: 0.75rem; font-weight: 700; color: #334155;">Admin</div>
+                            </div>
+                        </div>
+
+                        <!-- Simulador de Tarjeta con Componentes -->
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.2rem;">
+                            <div id="preview-title" style="font-size: 1.1rem; font-weight: 800; color: #1A365D; margin-bottom: 0.4rem;">
+                                Portal de Colaboradores - Panel Principal
+                            </div>
+                            <p style="font-size: 0.82rem; color: #64748B; margin-bottom: 1rem;">
+                                Este es un texto de ejemplo para comprobar que la tipografía mantiene una lectura impecable y descanso visual.
+                            </p>
+
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button type="button" id="preview-btn-primary" class="btn" style="background-color: #1A365D; color: white; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: none;">
+                                    Botón Principal
+                                </button>
+                                <button type="button" id="preview-btn-accent" class="btn" style="background-color: #00B894; color: white; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: none;">
+                                    Acción Destacada
+                                </button>
+                                <span id="preview-badge" style="background-color: #E6F8F5; color: #00B894; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 12px;">
+                                    Badge Activo
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 0.8rem 1rem; display: flex; gap: 8px; align-items: center;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <span style="font-size: 0.8rem; color: #1E40AF;">
+                                Los cambios se aplicarán instantáneamente en todo el portal para todos los usuarios.
+                            </span>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="/js/controllers/personalizacion.ctrl.js"></script>
+</body>
+
+</html>
