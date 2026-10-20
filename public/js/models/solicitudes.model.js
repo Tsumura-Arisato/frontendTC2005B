@@ -75,6 +75,8 @@ function formatSolicitud(raw) {
     return {
         id: raw.id || raw.folio || 'SOL-000',
         folio: raw.folio || `SOL-${raw.id}`,
+        empleado_id: empId,
+        empleadoId: empId,
         tipo: tipoNorm,
         tipoEtiqueta: raw.tipo_descripcion || raw.tipo_etiqueta || raw.tipoEtiqueta || etiquetaMap[tipoNorm] || 'Solicitud',
         fechaSolicitud: raw.fecha_solicitud || raw.fechaSolicitud || raw.created_at || new Date().toLocaleDateString('es-MX'),

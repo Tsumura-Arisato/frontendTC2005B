@@ -1,15 +1,18 @@
 import { initLayout } from './layout.ctrl.js';
 import { SolicitudesModel } from '../models/solicitudes.model.js';
 import { showSuccess, showError, showWarning, showConfirm } from '../utils/alert.js';
+import { getStoredUser } from '../config.js';
 
 let solicitudesCache = [];
 let solicitudSeleccionada = null;
+let currentManager = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const sessionUser = initLayout('aprobaciones');
     if (!sessionUser) return;
+    currentManager = sessionUser;
 
-    const userRole = (sessionUser.rol || localStorage.getItem('eslabon_user_role') || '').toLowerCase();
+    const userRole = (sessionUser.rol || sessionUser.role || localStorage.getItem('eslabon_user_role') || '').toLowerCase();
     const isManagerOrAdmin = ['administrador', 'jefe', 'gerente', 'director', 'recursos humanos', 'rh'].some(r => userRole.includes(r));
 
     if (!isManagerOrAdmin) {
@@ -145,9 +148,9 @@ function renderTable(list) {
     }
 
     if (list.length === 0) {
-        const sessionUser = JSON.parse(localStorage.getItem('eslabon_current_user') || '{}');
+        const sessionUser = currentManager || getStoredUser() || {};
         const userPuesto = (sessionUser.puesto || '').toLowerCase();
-        const userRole = (sessionUser.rol || '').toLowerCase();
+        const userRole = (sessionUser.rol || sessionUser.role || '').toLowerCase();
         const isJefazo = ['director', 'directora'].some(w => userPuesto.includes(w)) || (userRole.includes('administrador') && !userPuesto.includes('especialista'));
 
         const emptyMessage = isJefazo
@@ -165,6 +168,9 @@ function renderTable(list) {
         `;
         return;
     }
+
+    const activeUser = currentManager || getStoredUser() || {};
+    const myId = activeUser.id || activeUser.id_empleado;
 
     tbody.innerHTML = list.map(item => {
         const estatus = item.estatus || 'Pendiente';
@@ -188,6 +194,8 @@ function renderTable(list) {
         const puesto = item.puesto || item.departamento || 'Personal de Equipo';
 
         const isPendiente = estatus.toLowerCase() === 'pendiente';
+        const itemEmpId = item.empleado_id || item.empleadoId;
+        const esMiPropiaSolicitud = (itemEmpId && String(itemEmpId) === String(myId));
 
         return `
             <tr>
@@ -226,14 +234,20 @@ function renderTable(list) {
                         <button type="button" class="btn btn-outline btn-sm btn-action-ver" data-id="${item.id}" style="font-size: 0.8rem; padding: 0.35rem 0.7rem;">
                             Detalle
                         </button>
-                        ${isPendiente ? `
-                            <button type="button" class="btn btn-accent btn-sm btn-action-aprobar" data-id="${item.id}" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; background-color: #059669;">
-                                ✓ Aprobar
-                            </button>
-                            <button type="button" class="btn btn-outline btn-sm btn-action-rechazar" data-id="${item.id}" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; color: #EF4444; border-color: #EF4444;">
-                                ✗ Rechazar
-                            </button>
-                        ` : ''}
+                        ${isPendiente ? (
+                            esMiPropiaSolicitud ? `
+                                <span class="badge badge-neutral" style="font-size: 0.72rem; color: #475569; background: #E2E8F0; padding: 4px 8px; border-radius: 6px;" title="Un líder no puede autorizar su propia solicitud">
+                                    Pendiente de Dirección
+                                </span>
+                            ` : `
+                                <button type="button" class="btn btn-accent btn-sm btn-action-aprobar" data-id="${item.id}" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; background-color: #059669;">
+                                    ✓ Aprobar
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm btn-action-rechazar" data-id="${item.id}" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; color: #EF4444; border-color: #EF4444;">
+                                    ✗ Rechazar
+                                </button>
+                            `
+                        ) : ''}
                     </div>
                 </td>
             </tr>
@@ -244,8 +258,8 @@ function renderTable(list) {
 }
 
 function bindActionButtons() {
-    const sessionUser = JSON.parse(localStorage.getItem('eslabon_current_user') || '{}');
-    const managerId = sessionUser.id || sessionUser.id_empleado || 1;
+    const user = currentManager || getStoredUser() || {};
+    const managerId = user.id || user.id_empleado;
 
     document.querySelectorAll('.btn-action-ver').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -286,9 +300,14 @@ function abrirModalDetalle(item) {
     modalTitle.textContent = `Solicitud de ${item.tipoEtiqueta}`;
     modalFolio.textContent = `Folio Oficial: ${item.folio} • Fecha: ${item.fechaSolicitud}`;
 
+    const activeUser = currentManager || getStoredUser() || {};
+    const myId = activeUser.id || activeUser.id_empleado;
+    const itemEmpId = item.empleado_id || item.empleadoId;
+    const esMiPropiaSolicitud = (itemEmpId && String(itemEmpId) === String(myId));
+
     const isPendiente = (item.estatus || '').toLowerCase() === 'pendiente';
-    if (btnAprobar) btnAprobar.style.display = isPendiente ? 'inline-block' : 'none';
-    if (btnRechazar) btnRechazar.style.display = isPendiente ? 'inline-block' : 'none';
+    if (btnAprobar) btnAprobar.style.display = (isPendiente && !esMiPropiaSolicitud) ? 'inline-block' : 'none';
+    if (btnRechazar) btnRechazar.style.display = (isPendiente && !esMiPropiaSolicitud) ? 'inline-block' : 'none';
 
     let extraHtml = '';
     const d = item.detalles || {};
@@ -419,6 +438,9 @@ function setupModalListeners(managerId) {
 }
 
 async function ejecutarAprobacion(item, managerId) {
+    const activeUser = currentManager || getStoredUser() || {};
+    const resolvedManagerId = managerId || activeUser.id || activeUser.id_empleado;
+
     const confirmado = await showConfirm(
         '¿Aprobar Solicitud?',
         `¿Deseas autorizar formalmente la solicitud <strong>${item.folio}</strong> de <strong>${item.nombreEmpleado}</strong>?`,
@@ -428,7 +450,7 @@ async function ejecutarAprobacion(item, managerId) {
     if (!confirmado) return;
 
     try {
-        await SolicitudesModel.aprobarSolicitud(item.id, managerId);
+        await SolicitudesModel.aprobarSolicitud(item.id, resolvedManagerId);
         item.estatus = 'Aprobada';
 
         await showSuccess(
@@ -445,10 +467,13 @@ async function ejecutarAprobacion(item, managerId) {
 }
 
 async function ejecutarRechazo(item, managerId) {
+    const activeUser = currentManager || getStoredUser() || {};
+    const resolvedManagerId = managerId || activeUser.id || activeUser.id_empleado;
+
     if (!window.Swal) {
         const motivo = prompt('Por favor ingresa el motivo del rechazo (obligatorio):');
         if (!motivo) return;
-        return procesarRechazo(item, managerId, motivo);
+        return procesarRechazo(item, resolvedManagerId, motivo);
     }
 
     const { value: motivo } = await window.Swal.fire({
@@ -478,13 +503,16 @@ async function ejecutarRechazo(item, managerId) {
     });
 
     if (motivo) {
-        await procesarRechazo(item, managerId, motivo.trim());
+        await procesarRechazo(item, resolvedManagerId, motivo.trim());
     }
 }
 
 async function procesarRechazo(item, managerId, motivo) {
+    const activeUser = currentManager || getStoredUser() || {};
+    const resolvedManagerId = managerId || activeUser.id || activeUser.id_empleado;
+
     try {
-        await SolicitudesModel.rechazarSolicitud(item.id, managerId, motivo);
+        await SolicitudesModel.rechazarSolicitud(item.id, resolvedManagerId, motivo);
         item.estatus = 'Rechazada';
         item.motivoRechazo = motivo;
 

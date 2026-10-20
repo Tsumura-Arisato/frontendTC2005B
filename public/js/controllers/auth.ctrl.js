@@ -1,5 +1,5 @@
 import { AuthModel } from '../models/auth.model.js';
-import { showInfo } from '../utils/alert.js';
+import { showInfo, showSuccess } from '../utils/alert.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const activeUser = AuthModel.getCurrentUser();
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (activeUser && !is2FAVerified) {
-        showStep2FA();
+        showStep2FA(activeUser.email);
     }
 
     if (loginForm) {
@@ -43,9 +43,16 @@ document.addEventListener('DOMContentLoaded', () => {
             submitLoginBtn.textContent = 'Iniciando sesión...';
 
             try {
-                await AuthModel.login(email, password);
+                const loginResult = await AuthModel.login(email, password);
+
+                if (loginResult?.primerAcceso || loginResult?.requiereCompletarRegistro) {
+                    window.location.href = '/pages/completar-registro.html';
+                    return;
+                }
+
                 localStorage.removeItem('eslabon_2fa_verified');
-                showStep2FA();
+                const targetEmail = loginResult?.user?.email || loginResult?.email || email;
+                showStep2FA(targetEmail);
             } catch (err) {
                 if (errorAlert) {
                     errorAlert.textContent = err.message;
@@ -125,13 +132,20 @@ document.addEventListener('DOMContentLoaded', () => {
         resendBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                resendBtn.textContent = 'Generando nuevo código...';
-                await AuthModel.resend2FA();
-                showInfo('Código 2FA Reenviado', 'Se ha generado un nuevo código de 6 dígitos. Abre la consola de JavaScript (F12) para consultarlo.');
+                resendBtn.textContent = 'Enviando correo con nuevo código...';
+                resendBtn.style.pointerEvents = 'none';
+                const result = await AuthModel.resend2FA();
+                const targetEmail = result?.email || AuthModel.getCurrentUser()?.email || '';
+                if (targetEmail) {
+                    const emailTargetEl = document.getElementById('email-2fa-target');
+                    if (emailTargetEl) emailTargetEl.textContent = targetEmail;
+                }
+                showSuccess('Código Reenviado', `Hemos enviado un nuevo código de verificación${targetEmail ? ` a tu correo <b>${targetEmail}</b>` : ''}. Por favor revisa tu bandeja de entrada o spam.`);
             } catch (err) {
-                showError(err.message || 'No se pudo generar nuevo código.');
+                showError(err.message || 'No se pudo enviar el nuevo código.');
             } finally {
-                resendBtn.textContent = '¿No recibiste el código? Reenviar código';
+                resendBtn.textContent = '¿No recibiste el correo? Reenviar código';
+                resendBtn.style.pointerEvents = 'auto';
             }
         });
     }
@@ -143,11 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showStep2FA() {
+    function showStep2FA(emailParam) {
         if (loginForm) loginForm.style.display = 'none';
         if (form2FA) form2FA.style.display = 'block';
         if (subtitleEl) subtitleEl.textContent = 'Autenticación de Doble Factor (2FA)';
         if (errorAlert) errorAlert.style.display = 'none';
+
+        const emailTargetEl = document.getElementById('email-2fa-target');
+        const resolvedEmail = emailParam || AuthModel.getCurrentUser()?.email || '';
+        if (emailTargetEl && resolvedEmail) {
+            emailTargetEl.textContent = resolvedEmail;
+        }
+
         if (otpInputs[0]) otpInputs[0].focus();
     }
 

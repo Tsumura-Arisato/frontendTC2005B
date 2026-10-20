@@ -51,7 +51,7 @@ export const AuthModel = {
                 no_empleado: rawUser.no_empleado || rawUser.id_empleado || rawUser.id,
                 nombre: rawUser.nombre || '',
                 name: rawUser.nombre || '',
-                email: rawUser.email || rawUser.username || usernameOrEmail,
+                email: data.email || rawUser.email || rawUser.correo || rawUser.correo_personal || rawUser.username || usernameOrEmail,
                 username: rawUser.username || usernameOrEmail,
                 role: rawUser.rol || 'Colaborador',
                 rol: rawUser.rol || 'Colaborador',
@@ -59,6 +59,22 @@ export const AuthModel = {
                 departamento: rawUser.departamento || '',
                 avatar: resolveLocalAvatar(rawUser.avatar, rawUser.id)
             };
+
+            const esPrimerAcceso = !!(data.primerAcceso || data.requiereCompletarRegistro || 
+                rawUser.primerAcceso || rawUser.primer_acceso || rawUser.requiere_completar_registro ||
+                rawUser.password_temporal);
+
+            if (esPrimerAcceso) {
+                sessionStorage.setItem('eslabon_temp_token', token || 'temp_token_' + Date.now());
+                sessionStorage.setItem('eslabon_temp_user', JSON.stringify(user));
+                localStorage.setItem('eslabon_temp_user', JSON.stringify(user));
+                return {
+                    primerAcceso: true,
+                    requiereCompletarRegistro: true,
+                    token,
+                    user
+                };
+            }
 
             setSession(token, user);
 
@@ -71,7 +87,7 @@ export const AuthModel = {
                 console.log('%c════════════════════════════════════════════════════', 'color: #2563eb; font-weight: bold;');
             }
 
-            return { token, user, codigo2FA };
+            return { token, user, codigo2FA, email: user.email };
         } catch (error) {
             console.error('Error en autenticación:', error);
             throw error;

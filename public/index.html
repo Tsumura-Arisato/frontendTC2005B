@@ -63,7 +63,9 @@
             <form id="form-2fa" style="display: none;">
                 <div class="form-group">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-align: left;">Código de verificación (6 dígitos)</label>
-                    <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-bottom: 0.8rem; text-align: left;">Abre la consola de JavaScript (presiona <strong>F12</strong> o clic derecho &gt; <em>Inspeccionar</em> &gt; <strong>Consola</strong>) para ver el código generado.</small>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1rem; text-align: left; line-height: 1.4;">
+                        Hemos enviado un código de seguridad de 6 dígitos a tu correo registrado: <strong id="email-2fa-target" style="color: var(--primary-dark); font-weight: 700; word-break: break-all;">tu correo</strong>. Ingrésalo a continuación para continuar.
+                    </p>
                     <div style="display: flex; justify-content: space-between; gap: 6px; margin-bottom: 0.5rem;" id="otp-container">
                         <input type="text" maxlength="1" class="form-input otp-input" id="otp-1" inputmode="numeric" pattern="[0-9]*" style="width: 44px; height: 48px; padding: 0; text-align: center; font-size: 1.2rem; font-weight: 700; line-height: 48px; box-sizing: border-box;"
                             required>
@@ -85,7 +87,7 @@
                 </button>
 
                 <div style="margin-top: 1rem; text-align: center;">
-                    <a href="#" id="link-resend-2fa" class="link-forgot" style="font-size: 0.82rem;">¿No viste el código? Generar nuevo código</a>
+                    <a href="#" id="link-resend-2fa" class="link-forgot" style="font-size: 0.82rem;">¿No recibiste el correo? Reenviar código</a>
                 </div>
 
                 <div style="margin-top: 1.2rem; text-align: center;">

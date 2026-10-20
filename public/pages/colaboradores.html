@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipo y Colaboradores - Portal RH</title>
+    <link rel="icon" type="image/png" href="/assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/assets/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Portal RH" />
+
+    <script>
+        (function() {
+            if (localStorage.getItem("eslabon_theme_preference") === "dark") {
+                document.documentElement.classList.add("dark-mode");
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <script src="/vendor/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <div class="menu-overlay" id="menu-overlay"></div>
+
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+            <div id="navbar-container"></div>
+
+            <header class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                        <h1 class="title-primary" style="margin-bottom: 0;">Gestión de Equipo y Colaboradores</h1>
+                        <span class="badge badge-accent" id="badge-alcance-colaboradores" style="font-size: 0.75rem; text-transform: uppercase;">Líder de Área</span>
+                    </div>
+                    <p class="subtitle" id="subtitle-colaboradores" style="margin-bottom: 0;">
+                        Administra a los miembros de tu equipo, da de alta nuevos colaboradores y envía accesos de primer ingreso con contraseñas de un solo uso.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" id="btn-abrir-modal-invitar" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    + Crear / Invitar Colaborador
+                </button>
+            </header>
+
+            <!-- Métricas de Colaboradores -->
+            <section class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Total Colaboradores</div>
+                        <div class="stat-value" id="kpi-total-colaboradores" style="color: var(--primary-dark);">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);" id="kpi-depto-label">En tu departamento</span>
+                        <span class="badge badge-neutral">Plantilla</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Expedientes Activos</div>
+                        <div class="stat-value" id="kpi-activos" style="color: #10B981;">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Con cuenta y perfil completo</span>
+                        <span class="badge badge-success">Activo</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">Primer Acceso Pendiente</div>
+                        <div class="stat-value" id="kpi-pendientes-registro" style="color: #F59E0B;">0</div>
+                    </div>
+                    <div class="stat-footer">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Contraseña temporal enviada</span>
+                        <span class="badge badge-warning">Pendiente</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filtros y Búsqueda -->
+            <section class="card" style="margin-bottom: 1.5rem; padding: 1.2rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; flex: 1; max-width: 700px;">
+                        <div style="flex: 1; min-width: 240px; position: relative;">
+                            <input type="text" id="input-buscar-colaborador" class="form-input" placeholder="Buscar por nombre, correo o nómina..." style="width: 100%; padding-left: 2.4rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                        <select id="select-filtro-estado" class="form-input" style="width: 200px;">
+                            <option value="todos">Todos los estatus</option>
+                            <option value="activo">Activos (Expediente listo)</option>
+                            <option value="pendiente">Primer acceso pendiente</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary" id="btn-recargar-colaboradores" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Actualizar
+                    </button>
+                </div>
+            </section>
+
+            <!-- Tabla de Colaboradores -->
+            <section class="card" style="padding: 0; overflow: hidden;">
+                <div class="table-responsive">
+                    <table class="table" style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+                        <thead>
+                            <tr style="background-color: #F8FAFC; border-bottom: 1px solid var(--border-color); text-align: left;">
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Colaborador</th>
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Correo Institucional</th>
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Departamento y Puesto</th>
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Rol</th>
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Estatus Expediente</th>
+                                <th style="padding: 1rem 1.2rem; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-colaboradores">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                    Cargando listado de colaboradores...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para Invitar / Crear Colaborador -->
+    <div class="modal-backdrop" id="modal-invitar-colaborador" style="display: none;">
+        <div class="modal-container" style="max-width: 550px; width: 90%;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 8px; border-radius: 8px; display: flex;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    </div>
+                    <div>
+                        <h2 class="modal-title" style="margin: 0; font-size: 1.25rem;">Crear e Invitar Colaborador</h2>
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Se despachará una contraseña de un solo uso a su correo</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-cerrar-modal-invitar">&times;</button>
+            </div>
+
+            <form id="form-crear-colaborador">
+                <div class="modal-body" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem;">
+                    
+                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 0.85rem 1rem; display: flex; gap: 10px; align-items: flex-start;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <p style="font-size: 0.82rem; color: #1E40AF; margin: 0; line-height: 1.4;">
+                            El sistema generará una <strong>contraseña de un solo uso</strong> y la enviará por correo. Al iniciar sesión, el colaborador será dirigido automáticamente a la página de registro para completar su información personal, fiscal y bancaria obligatoria.
+                        </p>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="invitar-email" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-main);">
+                            Correo electrónico del colaborador <span style="color: #EF4444;">*</span>
+                        </label>
+                        <input type="email" id="invitar-email" class="form-input" placeholder="ejemplo.colaborador@eslabon.com" required style="width: 100%;">
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">A esta dirección llegará la invitación con sus credenciales de primer acceso.</small>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="invitar-rol" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-main);">
+                                Rol en el Portal <span style="color: #EF4444;">*</span>
+                            </label>
+                            <select id="invitar-rol" class="form-input" required style="width: 100%;">
+                                <option value="Colaborador" selected>Colaborador</option>
+                                <option value="Jefe">Jefe / Líder de Área</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="invitar-departamento" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-main);">
+                                Departamento <span style="color: #EF4444;">*</span>
+                            </label>
+                            <select id="invitar-departamento" class="form-input" required style="width: 100%;">
+                                <option value="Tecnología e Innovación">Tecnología e Innovación</option>
+                                <option value="Recursos Humanos">Recursos Humanos</option>
+                                <option value="Finanzas y Contabilidad">Finanzas y Contabilidad</option>
+                                <option value="Operaciones y Logística">Operaciones y Logística</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="invitar-puesto" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-main);">
+                            Puesto Asignado <span style="color: #EF4444;">*</span>
+                        </label>
+                        <input type="text" id="invitar-puesto" class="form-input" placeholder="Ej. Desarrollador Web, Analista Contable..." required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 1rem 1.5rem; background-color: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancelar-invitar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-invitar">
+                        Enviar Invitación y Crear Acceso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="/js/controllers/colaboradores.ctrl.js"></script>
+</body>
+
+</html>
