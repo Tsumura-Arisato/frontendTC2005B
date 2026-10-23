@@ -2,11 +2,20 @@ import { initLayout } from './layout.ctrl.js';
 import { fetchWithAuth, getStoredUser } from '../config.js';
 import { showSuccess, showError, showWarning, showInfo } from '../utils/alert.js';
 
+// 🎯 VARIABLE CENTRAL: Cambia esta ruta al juego que desees mostrar (MiOficinaVirtual, candy_crush, etc.)
+const RUTA_JUEGO_ACTIVO = '/games/MiOficinaVirtual/index.html';
+
 document.addEventListener('DOMContentLoaded', async () => {
     const sessionUser = initLayout('gamificacion');
     if (!sessionUser) return;
 
     const currentUserId = sessionUser.id || sessionUser.id_usuario || sessionUser.id_empleado || 1;
+
+    // Inyectar el juego configurado al iframe
+    const iframeUnity = document.getElementById('unity-game-iframe');
+    if (iframeUnity) {
+        iframeUnity.src = RUTA_JUEGO_ACTIVO;
+    }
 
     await updateGamificacionStats(currentUserId);
     await loadLeaderboard();
@@ -14,6 +23,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupUnityControls();
     setupJuegoTerminadoListener(currentUserId);
     setupReclamarRecompensa(currentUserId);
+
+    // Sistema de doble envío (Compatible con todos los juegos, requieran ID o no)
+    const idEnTexto = currentUserId.toString();
+    const iframesJuegos = document.querySelectorAll('iframe');
+    
+    iframesJuegos.forEach(iframe => {
+        if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ tipo: 'ENVIAR_ID_UNITY', idUsuario: idEnTexto }, '*');
+        }
+
+        iframe.addEventListener('load', () => {
+            iframe.contentWindow.postMessage({ tipo: 'ENVIAR_ID_UNITY', idUsuario: idEnTexto }, '*');
+        });
+    });
 });
 
 async function updateGamificacionStats(userId) {
@@ -27,7 +50,6 @@ async function updateGamificacionStats(userId) {
         let reclamadoHoy = false;
         let resumenNivel = null;
 
-        // Intentar consultar endpoint consolidado de resumen si el backend lo tiene implementado
         let resumenObtenido = false;
         try {
             const resResumen = await fetchWithAuth(`/gamificacion/resumen?userId=${userId}`);
@@ -53,7 +75,6 @@ async function updateGamificacionStats(userId) {
         } catch (ignored) {}
 
         if (!resumenObtenido) {
-            // 1. Cargar perfil oficial del usuario desde SQL Server
             const resPerfil = await fetchWithAuth(`/perfil?empleado_id=${userId}`);
             if (resPerfil.ok) {
                 const profile = await resPerfil.json();
@@ -65,7 +86,6 @@ async function updateGamificacionStats(userId) {
                 }
             }
 
-            // 2. Cargar estado de la partida diaria y verificar si ya jugó hoy
             const resEstado = await fetchWithAuth(`/gamificacion/partida/estado?userId=${userId}&minigameId=1`);
             if (resEstado.ok) {
                 const estado = await resEstado.json();
@@ -79,7 +99,6 @@ async function updateGamificacionStats(userId) {
                 }
             }
 
-            // 3. Cargar y calcular Racha de Entrada / Asistencia consecutiva
             try {
                 const resAsistencia = await fetchWithAuth(`/asistencia?empleadoId=${userId}`);
                 if (resAsistencia.ok) {
@@ -100,13 +119,11 @@ async function updateGamificacionStats(userId) {
             }
         }
 
-        // 4. Actualizar elemento Puntos Individuales Acumulados
         const ptsEl = document.getElementById('pts-individuales');
         if (ptsEl) {
             ptsEl.textContent = `${balance.toLocaleString()} Pts`;
         }
 
-        // 5. Actualizar Nivel de Usuario
         const nivelEl = document.getElementById('pts-nivel');
         if (nivelEl) {
             let nivelNombre = resumenNivel || null;
@@ -119,7 +136,6 @@ async function updateGamificacionStats(userId) {
             nivelEl.textContent = `${nivelNombre} (${rolUsuario})`;
         }
 
-        // 6. Actualizar Aporte al Departamento Hoy
         const aporteEl = document.getElementById('pts-aporte-hoy');
         const badgeAporteEl = document.getElementById('pts-aporte-badge');
         if (aporteEl) {
@@ -135,7 +151,6 @@ async function updateGamificacionStats(userId) {
             }
         }
 
-        // 7. Actualizar Racha Diaria en el DOM
         const rachaEl = document.getElementById('pts-racha-dias');
         const rachaBonoEl = document.getElementById('pts-racha-bono');
         if (rachaEl) {
@@ -149,7 +164,6 @@ async function updateGamificacionStats(userId) {
             }
         }
 
-        // 8. Verificar estado del botón de reclamación diaria
         const btnReclamar = document.getElementById('btn-reclamar-recompensa');
         if (btnReclamar && reclamadoHoy) {
             btnReclamar.disabled = true;
@@ -179,6 +193,7 @@ async function loadLeaderboard() {
 function setupUnityControls() {
     const iframeUnity = document.getElementById('unity-game-iframe');
     const btnFullscreen = document.getElementById('btn-fullscreen-unity');
+    
     if (btnFullscreen && iframeUnity) {
         btnFullscreen.addEventListener('click', () => {
             if (iframeUnity.requestFullscreen) {
@@ -194,7 +209,8 @@ function setupUnityControls() {
     const btnReload = document.getElementById('btn-reload-unity');
     if (btnReload && iframeUnity) {
         btnReload.addEventListener('click', () => {
-            iframeUnity.src = '/games/candy_crush/index.html';
+            // El botón respeta la variable centralizada
+            iframeUnity.src = RUTA_JUEGO_ACTIVO;
         });
     }
 }
@@ -203,20 +219,12 @@ function setupJuegoTerminadoListener(userId) {
     let isProcessing = false;
     let ultimoScoreConocido = 0;
 
-    console.log('%c[Frontend Gamificación] 🎧 Escuchadores de eventos de Unity inicializados para userId: ' + userId, 'color: #3B82F6; font-weight: bold;');
-
     const onGameEnded = async (origenEvento, score) => {
-        if (isProcessing) {
-            console.warn(`[Frontend Gamificación] ⚠️ Evento "${origenEvento}" ignorado porque ya se está guardando la partida.`);
-            return;
-        }
+        if (isProcessing) return;
         isProcessing = true;
-
-        console.log(`%c[Frontend Gamificación] 🏁 Fin de partida detectado desde "${origenEvento}". Score final: ${score}`, 'color: #10B981; font-weight: bold;');
 
         const iframe = document.getElementById('unity-game-iframe');
         if (iframe) {
-            console.log('[Frontend Gamificación] 🛑 Desmontando y deteniendo iframe de Unity...');
             iframe.src = 'about:blank';
             iframe.remove();
         }
@@ -236,14 +244,7 @@ function setupJuegoTerminadoListener(userId) {
         }
 
         let finalScore = score;
-        const payload = {
-            userId: userId,
-            score: score,
-            minigameId: 1,
-            tiempoJugado: 60
-        };
-
-        console.log('[Frontend Gamificación] 📤 Enviando POST /api/gamificacion/partida con payload:', payload);
+        const payload = { userId: userId, score: score, minigameId: 1, tiempoJugado: 60 };
 
         try {
             const response = await fetchWithAuth('/gamificacion/partida', {
@@ -251,27 +252,21 @@ function setupJuegoTerminadoListener(userId) {
                 body: JSON.stringify(payload)
             });
 
-            console.log('[Frontend Gamificación] 📥 Código de respuesta HTTP:', response.status, response.statusText);
-
             if (response.ok) {
                 const data = await response.json();
-                console.log('[Frontend Gamificación] ✅ Puntuación registrada exitosamente en SQL Server:', data);
                 finalScore = data.partida?.puntuacion_obtenida ?? score;
                 await showSuccess('¡Partida Guardada con Éxito!', `Has obtenido <strong>${finalScore.toLocaleString()} Pts</strong> para el ranking de tu departamento.`);
             } else if (response.status === 409) {
                 const errData = await response.json().catch(() => ({}));
-                console.warn('[Frontend Gamificación] ⚠️ Partida ya jugada hoy (409):', errData);
                 if (errData.partidaPrevia?.puntuacion_obtenida !== undefined) {
                     finalScore = errData.partidaPrevia.puntuacion_obtenida;
                 }
                 await showWarning('Intento Oficial Completado', 'Ya has completado tu partida diaria de hoy. Se mantendrá tu puntuación previa registrada en el ranking.');
             } else {
                 const errData = await response.json().catch(() => ({}));
-                console.error('[Frontend Gamificación] ❌ Error de API al guardar partida:', errData);
                 await showError('Error al Guardar Puntuación', errData.error || 'Hubo un inconveniente al guardar la puntuación oficial.');
             }
         } catch (e) {
-            console.error('[Frontend Gamificación] 💥 Error de red o excepción inesperada:', e);
             await showError('Error de Conexión', 'No se pudo conectar con el servidor para registrar la partida.');
         }
 
@@ -280,40 +275,31 @@ function setupJuegoTerminadoListener(userId) {
         await loadLeaderboard();
     };
 
-    // 1. Escuchar JuegoTerminado en window
     window.addEventListener('JuegoTerminado', (event) => {
         const score = Number(event.detail?.score ?? event.detail ?? event.score ?? 0);
         if (score > 0) ultimoScoreConocido = score;
-        console.log('%c[Frontend Gamificación] 🎮 Evento "JuegoTerminado" capturado en window:', 'color: #10B981; font-weight: bold;', { score, detail: event.detail });
         onGameEnded('JuegoTerminado', score);
     });
 
-    // 2. Escuchar JuegoSalir en window
     window.addEventListener('JuegoSalir', (event) => {
         const score = Number(event.detail?.score ?? event.detail ?? event.score ?? ultimoScoreConocido ?? 0);
-        console.log('%c[Frontend Gamificación] 🚪 Evento "JuegoSalir" capturado en window:', 'color: #F59E0B; font-weight: bold;', { score, detail: event.detail, ultimoScoreConocido });
         onGameEnded('JuegoSalir', score);
     });
 
-    // 3. Escuchar postMessage desde el iframe
     window.addEventListener('message', (event) => {
         if (event.data && (event.data.type === 'JuegoTerminado' || event.data.type === 'JuegoSalir')) {
             const rawScore = event.data.score ?? event.data.detail?.score ?? event.data.detail ?? ultimoScoreConocido ?? 0;
             const score = Number(rawScore);
             if (score > 0) ultimoScoreConocido = score;
-            console.log(`%c[Frontend Gamificación] 📬 Mensaje postMessage "${event.data.type}" capturado:`, 'color: #8B5CF6; font-weight: bold;', { score, data: event.data });
             onGameEnded(event.data.type, score);
         }
     });
 
-    // 4. Exponer funciones de puente globales por si Unity o scripts de depuración las llaman
     window.NotificarFinPartida = (puntos) => {
-        console.log('[Frontend Gamificación] ⚡ window.NotificarFinPartida invocado con:', puntos);
         window.dispatchEvent(new CustomEvent('JuegoTerminado', { detail: { score: puntos } }));
     };
 
     window.SalirDelJuego = () => {
-        console.log('[Frontend Gamificación] ⚡ window.SalirDelJuego invocado');
         window.dispatchEvent(new CustomEvent('JuegoSalir', { detail: { score: ultimoScoreConocido } }));
     };
 }

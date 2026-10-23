@@ -323,7 +323,7 @@ export async function syncBrandingFromDB() {
     const empresaId = resolveUserEmpresaId(user);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/empresa/branding?empresa_id=${empresaId}`);
+        const response = await fetchWithAuth(`/empresa/branding?empresa_id=${empresaId}`);
         if (response.ok) {
             const data = await response.json();
             if (data && (data.primaryDark || data.color_primario_dark)) {

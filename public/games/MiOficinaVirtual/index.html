@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | Oficina virtual</title>
+  </head>
+  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+    <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
+    <script src="Build/MiOficinaVirtual.loader.js"></script>
+    <script>
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+
+        var canvas = document.querySelector("#unity-canvas");
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.position = "fixed";
+
+        document.body.style.textAlign = "left";
+      }
+
+      var miInstanciaUnity = null;
+      var idUsuarioPendiente = null;
+
+      window.addEventListener('message', (evento) => {
+          console.log("👀 IFRAME RECIBIÓ MENSAJE:", evento.data); 
+
+          if (evento.data && evento.data.tipo === 'ENVIAR_ID_UNITY') {
+              const idEnTexto = evento.data.idUsuario.toString();
+              
+              if (miInstanciaUnity != null) {
+                  console.log("✅ Unity estaba listo, enviando ID a APIManager...");
+                  miInstanciaUnity.SendMessage('APIManager', 'SetUsuarioDesdeWeb', idEnTexto);
+              } else {
+                  console.log("⏳ Unity aún no está listo. Guardando ID pendiente:", idEnTexto);
+                  idUsuarioPendiente = idEnTexto;
+              }
+          }
+      });
+
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "Build/MiOficinaVirtual.data",
+        frameworkUrl: "Build/MiOficinaVirtual.framework.js",
+        codeUrl: "Build/MiOficinaVirtual.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Oficina virtual",
+        productVersion: "0.1.0",
+      }).then((unityInstance) => {
+          miInstanciaUnity = unityInstance;
+          if (idUsuarioPendiente != null) {
+              miInstanciaUnity.SendMessage('APIManager', 'SetUsuarioDesdeWeb', idUsuarioPendiente);
+              idUsuarioPendiente = null;
+          }
+      }).catch((message) => {
+        alert(message);
+      });
+    </script>
+  </body>
+</html>

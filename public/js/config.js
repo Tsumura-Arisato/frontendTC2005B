@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = 'https://cavalier-eldercare-sierra.ngrok-free.dev/api';
 
 /**
  * Personalización Multi-Empresa (White-Label):
@@ -37,21 +37,27 @@ export function clearSession() {
 }
 
 export async function fetchWithAuth(endpoint, options = {}) {
+    options = options || {};
+
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
     const token = getToken();
 
+    // 1. Centralizamos TODO en un solo objeto desde el principio
     const headers = {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // <-- Agregado directamente al objeto final
         ...(options.headers || {})
     };
 
+    // 2. Agregamos el token si existe
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
+    // 3. Empaquetamos la configuración
     const config = {
         ...options,
-        headers
+        headers: headers // Usamos nuestro objeto unificado
     };
 
     try {
